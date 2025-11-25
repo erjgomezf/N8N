@@ -123,12 +123,11 @@
         }
 
         .input-label {
-            color: #aaa;
-        }
-
-        .input-field:focus~.input-label,
-        .input-field:not(:placeholder-shown)~.input-label {
             color: #D4AF37;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            display: block;
         }
 
         /* Botón Premium Gold */
@@ -229,47 +228,43 @@
                 <form id="requestForm" class="space-y-5">
 
                     <!-- Nombre -->
-                    <div class="relative group">
-                        <input type="text" id="usuario" name="usuario"
-                            class="input-field block w-full px-4 py-3.5 rounded-lg text-sm peer placeholder-transparent"
-                            placeholder="Nombre" required>
-                        <label for="usuario"
-                            class="input-label absolute left-4 top-3.5 text-sm transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-3.5 peer-focus:-top-2.5 peer-focus:text-xs peer-focus:bg-black/80 peer-focus:px-1 peer-not-placeholder-shown:-top-2.5 peer-not-placeholder-shown:text-xs peer-not-placeholder-shown:bg-black/80 peer-not-placeholder-shown:px-1 pointer-events-none">
+                    <div class="space-y-2">
+                        <label for="usuario" class="input-label">
                             Nombre Completo
                         </label>
+                        <input type="text" id="usuario" name="usuario"
+                            class="input-field block w-full px-4 py-3.5 rounded-lg text-sm"
+                            placeholder="Ingresa tu nombre completo" required>
                     </div>
 
                     <!-- Email -->
-                    <div class="relative group">
-                        <input type="email" id="correo_electronico" name="correo_electronico"
-                            class="input-field block w-full px-4 py-3.5 rounded-lg text-sm peer placeholder-transparent"
-                            placeholder="Email" required>
-                        <label for="correo_electronico"
-                            class="input-label absolute left-4 top-3.5 text-sm transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-3.5 peer-focus:-top-2.5 peer-focus:text-xs peer-focus:bg-black/80 peer-focus:px-1 peer-not-placeholder-shown:-top-2.5 peer-not-placeholder-shown:text-xs peer-not-placeholder-shown:bg-black/80 peer-not-placeholder-shown:px-1 pointer-events-none">
+                    <div class="space-y-2">
+                        <label for="correo_electronico" class="input-label">
                             Correo Electrónico
                         </label>
+                        <input type="email" id="correo_electronico" name="correo_electronico"
+                            class="input-field block w-full px-4 py-3.5 rounded-lg text-sm"
+                            placeholder="ejemplo@correo.com" required>
                     </div>
 
                     <!-- Teléfono -->
-                    <div class="relative group">
-                        <input type="tel" id="numero_telefono" name="numero_telefono"
-                            class="input-field block w-full px-4 py-3.5 rounded-lg text-sm peer placeholder-transparent"
-                            placeholder="Teléfono" required>
-                        <label for="numero_telefono"
-                            class="input-label absolute left-4 top-3.5 text-sm transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-3.5 peer-focus:-top-2.5 peer-focus:text-xs peer-focus:bg-black/80 peer-focus:px-1 peer-not-placeholder-shown:-top-2.5 peer-not-placeholder-shown:text-xs peer-not-placeholder-shown:bg-black/80 peer-not-placeholder-shown:px-1 pointer-events-none">
+                    <div class="space-y-2">
+                        <label for="numero_telefono" class="input-label">
                             Teléfono / WhatsApp
                         </label>
+                        <input type="tel" id="numero_telefono" name="numero_telefono"
+                            class="input-field block w-full px-4 py-3.5 rounded-lg text-sm"
+                            placeholder="+57 300 123 4567" required>
                     </div>
 
                     <!-- Mensaje -->
-                    <div class="relative group">
-                        <textarea id="mensaje" name="mensaje" rows="3"
-                            class="input-field block w-full px-4 py-3.5 rounded-lg text-sm peer placeholder-transparent resize-none"
-                            placeholder="Mensaje" required></textarea>
-                        <label for="mensaje"
-                            class="input-label absolute left-4 top-3.5 text-sm transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-3.5 peer-focus:-top-2.5 peer-focus:text-xs peer-focus:bg-black/80 peer-focus:px-1 peer-not-placeholder-shown:-top-2.5 peer-not-placeholder-shown:text-xs peer-not-placeholder-shown:bg-black/80 peer-not-placeholder-shown:px-1 pointer-events-none">
-                            Detalles del Evento (Fecha, Lugar...)
+                    <div class="space-y-2">
+                        <label for="mensaje" class="input-label">
+                            Detalles del Evento
                         </label>
+                        <textarea id="mensaje" name="mensaje" rows="3"
+                            class="input-field block w-full px-4 py-3.5 rounded-lg text-sm resize-none"
+                            placeholder="Cuéntanos sobre tu evento: fecha, lugar, tipo de celebración..." required></textarea>
                     </div>
 
                     <!-- Botón Submit -->
