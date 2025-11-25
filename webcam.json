@@ -3,58 +3,16 @@
   "nodes": [
     {
       "parameters": {
-        "multipleMethods": true,
         "path": "webcam",
-        "responseMode": "responseNode",
+        "responseMode": "onReceived",
         "options": {}
       },
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
-      "position": [
-        0,
-        -96
-      ],
+      "position": [224, -96],
       "id": "51b174f8-be20-4b69-a3a7-5c68465ecf05",
       "name": "Webhook",
       "webhookId": "fcfe572f-018a-47ae-a4b7-23a8376629a1"
-    },
-    {
-      "parameters": {
-        "respondWith": "text",
-        "responseBody": "<!DOCTYPE html>\n<html lang=\"es\" class=\"scroll-smooth\">\n\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Live Moments | Conecta Emociones</title>\n    <meta name=\"description\"\n        content=\"Conserva tus mejores momentos con tus seres queridos. Servicios de streaming profesional para eventos.\">\n\n    <!-- Tailwind CSS -->\n    <script src=\"https://cdn.tailwindcss.com\"></script>\n\n    <!-- Google Fonts -->\n    <link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n    <link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>\n    <link\n        href=\"https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,600;0,800;1,600&display=swap\"\n        rel=\"stylesheet\">\n\n    <script>\n        tailwind.config = {\n            theme: {\n                extend: {\n                    fontFamily: {\n                        sans: ['Inter', 'sans-serif'],\n                        serif: ['Playfair Display', 'serif'],\n                    },\n                    colors: {\n                        brand: {\n                            gold: '#D4AF37',\n                            dark: '#1a1a1a',\n                            warm: '#FFF5E1'\n                        }\n                    },\n                    animation: {\n                        'ken-burns': 'kenBurns 20s ease-out infinite alternate',\n                        'fade-in': 'fadeIn 1s ease-out forwards',\n                        'slide-up': 'slideUp 0.8s ease-out forwards',\n                    },\n                    keyframes: {\n                        kenBurns: {\n                            '0%': { transform: 'scale(1)' },\n                            '100%': { transform: 'scale(1.1) translate(-10px, -5px)' },\n                        },\n                        fadeIn: {\n                            '0%': { opacity: '0' },\n                            '100%': { opacity: '1' },\n                        },\n                        slideUp: {\n                            '0%': { opacity: '0', transform: 'translateY(30px)' },\n                            '100%': { opacity: '1', transform: 'translateY(0)' },\n                        }\n                    }\n                }\n            }\n        }\n    </script>\n\n    <style>\n        /* Estilos Cinematográficos */\n        body {\n            background-color: #000;\n            color: #fff;\n            overflow-x: hidden;\n        }\n\n        /* Fondo Animado */\n        .hero-bg {\n            position: fixed;\n            top: 0;\n            left: 0;\n            width: 100%;\n            height: 100%;\n            z-index: -1;\n            overflow: hidden;\n        }\n\n        .hero-image {\n            width: 100%;\n            height: 100%;\n            object-fit: cover;\n            /* Imagen generada localmente */\n            background-image: url(\"EAcqniW.jpeg\");\n            background-position: center;\n            background-size: cover;\n            filter: brightness(0.4) contrast(1.1);\n            /* Oscurecer para legibilidad */\n        }\n\n        /* Overlay Gradiente */\n        .hero-overlay {\n            position: absolute;\n            top: 0;\n            left: 0;\n            width: 100%;\n            height: 100%;\n            background: linear-gradient(to right, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.6) 50%, rgba(0, 0, 0, 0.3) 100%);\n        }\n\n        /* Glass Card Refinada */\n        .glass-card {\n            background: rgba(20, 20, 20, 0.6);\n            backdrop-filter: blur(20px);\n            -webkit-backdrop-filter: blur(20px);\n            border: 1px solid rgba(255, 255, 255, 0.1);\n            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);\n        }\n\n        /* Inputs Elegantes */\n        .input-field {\n            background: rgba(255, 255, 255, 0.05);\n            border: 1px solid rgba(255, 255, 255, 0.1);\n            color: #fff;\n            transition: all 0.3s ease;\n        }\n\n        .input-field:focus {\n            background: rgba(255, 255, 255, 0.1);\n            border-color: #D4AF37;\n            /* Gold */\n            outline: none;\n        }\n\n        .input-label {\n            color: #D4AF37;\n            font-size: 0.875rem;\n            font-weight: 500;\n            margin-bottom: 0.5rem;\n            display: block;\n        }\n\n        /* Botón Premium Gold */\n        .btn-gold {\n            background: linear-gradient(135deg, #D4AF37 0%, #B49328 100%);\n            color: #000;\n            font-weight: 700;\n            letter-spacing: 0.05em;\n            text-transform: uppercase;\n            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);\n            transition: all 0.3s ease;\n        }\n\n        .btn-gold:hover {\n            transform: translateY(-2px);\n            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.5);\n            filter: brightness(1.1);\n        }\n\n        /* Loader */\n        .loader {\n            width: 18px;\n            height: 18px;\n            border: 2px solid #000;\n            border-bottom-color: transparent;\n            border-radius: 50%;\n            display: inline-block;\n            animation: rotation 1s linear infinite;\n        }\n\n        @keyframes rotation {\n            0% {\n                transform: rotate(0deg);\n            }\n\n            100% {\n                transform: rotate(360deg);\n            }\n        }\n    </style>\n</head>\n\n<body class=\"antialiased font-sans selection:bg-brand-gold selection:text-black\">\n\n    <!-- Fondo Cinematográfico -->\n    <div class=\"hero-bg\">\n        <div class=\"hero-image animate-ken-burns\"></div>\n        <div class=\"hero-overlay\"></div>\n    </div>\n\n    <!-- Contenedor Principal -->\n    <div\n        class=\"relative z-10 min-h-screen flex flex-col lg:flex-row items-center justify-center p-6 lg:p-16 gap-12 max-w-8xl mx-auto\">\n\n        <!-- Columna Izquierda: Mensaje Emocional -->\n        <div class=\"w-full lg:w-7/12 text-center lg:text-left space-y-8 animate-slide-up\">\n\n            <!-- Tagline -->\n            <div\n                class=\"inline-block px-3 py-1 border border-brand-gold/50 rounded text-brand-gold text-xs tracking-[0.2em] uppercase font-medium mb-2\">\n                Live Moments Production\n            </div>\n\n            <!-- Título Principal -->\n            <h1 class=\"font-serif text-5xl md:text-6xl lg:text-7xl leading-tight text-white drop-shadow-lg\">\n                Conserva tus <br>\n                <span class=\"italic text-brand-gold\">mejores momentos</span> <br>\n                con tus seres queridos.\n            </h1>\n\n            <!-- Descripción -->\n            <p class=\"text-lg md:text-xl text-gray-300 font-light max-w-2xl mx-auto lg:mx-0 leading-relaxed\">\n                La distancia es solo física. Ofrecemos servicios de streaming profesional multicámara para que nadie se\n                pierda tu celebración.\n                <span class=\"block mt-4 text-white/90 font-normal\">\n                    🎥 Calidad Cine &nbsp;|&nbsp; 📡 Conexión Global &nbsp;|&nbsp; ❤️ Experiencia Inolvidable\n                </span>\n            </p>\n\n            <!-- Botón CTA (Móvil) -->\n            <div class=\"lg:hidden pt-4\">\n                <a href=\"#formulario\" class=\"btn-gold px-8 py-4 rounded-full inline-block w-full\">\n                    Reservar Fecha\n                </a>\n            </div>\n\n        </div>\n\n        <!-- Columna Derecha: Formulario (Glass Card) -->\n        <div id=\"formulario\" class=\"w-full lg:w-5/12 xl:w-4/12 animate-slide-up\" style=\"animation-delay: 0.2s;\">\n            <div class=\"glass-card rounded-2xl p-8 md:p-10\">\n\n                <div class=\"text-center mb-8\">\n                    <h3 class=\"font-serif text-3xl text-white mb-2\">Comienza la Magia</h3>\n                    <p class=\"text-gray-400 text-sm\">Déjanos tus datos y diseñaremos una experiencia a medida.</p>\n                </div>\n\n                <form id=\"requestForm\" class=\"space-y-5\">\n\n                    <!-- Nombre -->\n                    <div class=\"space-y-2\">\n                        <label for=\"usuario\" class=\"input-label\">\n                            Nombre Completo\n                        </label>\n                        <input type=\"text\" id=\"usuario\" name=\"usuario\"\n                            class=\"input-field block w-full px-4 py-3.5 rounded-lg text-sm\"\n                            placeholder=\"Ingresa tu nombre completo\" required>\n                    </div>\n\n                    <!-- Email -->\n                    <div class=\"space-y-2\">\n                        <label for=\"correo_electronico\" class=\"input-label\">\n                            Correo Electrónico\n                        </label>\n                        <input type=\"email\" id=\"correo_electronico\" name=\"correo_electronico\"\n                            class=\"input-field block w-full px-4 py-3.5 rounded-lg text-sm\"\n                            placeholder=\"ejemplo@correo.com\" required>\n                    </div>\n\n                    <!-- Teléfono -->\n                    <div class=\"space-y-2\">\n                        <label for=\"numero_telefono\" class=\"input-label\">\n                            Teléfono / WhatsApp\n                        </label>\n                        <input type=\"tel\" id=\"numero_telefono\" name=\"numero_telefono\"\n                            class=\"input-field block w-full px-4 py-3.5 rounded-lg text-sm\"\n                            placeholder=\"+57 300 123 4567\" required>\n                    </div>\n\n                    <!-- Mensaje -->\n                    <div class=\"space-y-2\">\n                        <label for=\"mensaje\" class=\"input-label\">\n                            Detalles del Evento\n                        </label>\n                        <textarea id=\"mensaje\" name=\"mensaje\" rows=\"3\"\n                            class=\"input-field block w-full px-4 py-3.5 rounded-lg text-sm resize-none\"\n                            placeholder=\"Cuéntanos sobre tu evento: fecha, lugar, tipo de celebración...\" required></textarea>\n                    </div>\n\n                    <!-- Botón Submit -->\n                    <button type=\"submit\" id=\"submitButton\"\n                        class=\"btn-gold w-full py-4 rounded-lg flex justify-center items-center gap-2 mt-2\">\n                        <span>SOLICITAR PRESUPUESTO</span>\n                        <div id=\"loader\" class=\"loader hidden\"></div>\n                    </button>\n\n                    <!-- Feedback -->\n                    <div id=\"feedbackMessage\" class=\"hidden p-3 rounded text-xs text-center font-medium\"></div>\n\n                </form>\n            </div>\n        </div>\n\n    </div>\n\n    <!-- Lógica JS (Mantenida) -->\n    <script>\n        const isValidEmail = (email) => /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email);\n        const isNumeric = (phone) => /^\\+?[\\d\\s\\-\\(\\)]+$/.test(phone);\n\n        const showFeedback = (message, type = 'success') => {\n            const el = document.getElementById('feedbackMessage');\n            el.textContent = message;\n            el.className = `p-3 rounded text-xs text-center font-medium transition-all ${type === 'success'\n                ? 'bg-green-500/20 text-green-300 border border-green-500/30'\n                : 'bg-red-500/20 text-red-300 border border-red-500/30'\n                }`;\n            el.classList.remove('hidden');\n        };\n\n        document.getElementById('requestForm').addEventListener('submit', async function (e) {\n            e.preventDefault();\n            const form = e.target;\n            const btn = document.getElementById('submitButton');\n            const btnText = btn.querySelector('span');\n            const loader = document.getElementById('loader');\n\n            const data = {\n                usuario: form.usuario.value.trim(),\n                correo_electronico: form.correo_electronico.value.trim(),\n                numero_telefono: form.numero_telefono.value.trim(),\n                mensaje: form.mensaje.value.trim()\n            };\n\n            if (!data.usuario || !data.correo_electronico || !data.numero_telefono || !data.mensaje) {\n                showFeedback('Por favor completa todos los campos.', 'error');\n                return;\n            }\n            if (!isValidEmail(data.correo_electronico)) {\n                showFeedback('Correo electrónico inválido.', 'error');\n                return;\n            }\n            if (!isNumeric(data.numero_telefono)) {\n                showFeedback('Número de teléfono inválido.', 'error');\n                return;\n            }\n\n            btn.disabled = true;\n            btn.classList.add('opacity-80', 'cursor-not-allowed');\n            btnText.textContent = 'ENVIANDO...';\n            loader.classList.remove('hidden');\n            document.getElementById('feedbackMessage').classList.add('hidden');\n\n            const webhookUrl = \"https://erjgomezf.app.n8n.cloud/webhook/webcam\";\n\n            try {\n                const response = await fetch(webhookUrl, {\n                    method: 'POST',\n                    headers: { 'Content-Type': 'application/json' },\n                    body: JSON.stringify(data)\n                });\n\n                if (!response.ok) throw new Error('Server Error');\n\n                showFeedback('¡Gracias! Tu solicitud ha sido recibida. Te contactaremos pronto.', 'success');\n                form.reset();\n\n            } catch (error) {\n                console.error(error);\n                showFeedback('Error de conexión. Inténtalo de nuevo.', 'error');\n            } finally {\n                btn.disabled = false;\n                btn.classList.remove('opacity-80', 'cursor-not-allowed');\n                btnText.textContent = 'SOLICITAR PRESUPUESTO';\n                loader.classList.add('hidden');\n            }\n        });\n    </script>\n</body>\n\n</html>",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.4,
-      "position": [
-        224,
-        -192
-      ],
-      "id": "433b81d8-89ab-4cf2-9ff6-f53ab69049c5",
-      "name": "fomularioWeb"
-    },
-    {
-      "parameters": {
-        "sendTo": "erjgomezf@gmail.com",
-        "subject": "Ha ocurrido un error",
-        "message": "=Ha ocurrido un error al mostrar el formulario {{ $('Webhook').item.json.headers.host }}",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.gmail",
-      "typeVersion": 2.1,
-      "position": [
-        448,
-        -192
-      ],
-      "id": "1e16da37-1749-4441-9879-962ecd9198db",
-      "name": "enviarMensajeError",
-      "webhookId": "07f95efd-bbda-45f4-9f74-e6b8dcc8e1be",
-      "credentials": {
-        "gmailOAuth2": {
-          "id": "epJXtZpuLZrkwhkN",
-          "name": "Gmail account"
-        }
-      }
     },
     {
       "parameters": {
@@ -96,10 +54,7 @@
       },
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [
-        224,
-        0
-      ],
+      "position": [224, 0],
       "id": "0c4e44e5-453a-4320-a19e-ecc6919ce649",
       "name": "formularioBase"
     },
@@ -138,10 +93,7 @@
       },
       "type": "n8n-nodes-base.filter",
       "typeVersion": 2.2,
-      "position": [
-        448,
-        0
-      ],
+      "position": [448, 0],
       "id": "fb9152b6-7188-4af7-a09e-0193e6b326e6",
       "name": "filtrarDatos",
       "onError": "continueErrorOutput"
@@ -153,10 +105,7 @@
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
       "typeVersion": 1,
-      "position": [
-        720,
-        400
-      ],
+      "position": [720, 400],
       "id": "154a4eb7-ccf4-4027-8357-916f2caba756",
       "name": "Google Gemini Chat Model",
       "credentials": {
@@ -257,10 +206,7 @@
       },
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
-      "position": [
-        1312,
-        -128
-      ],
+      "position": [1312, -128],
       "id": "0a37d774-fbd8-475b-97b2-bfb23d6800e1",
       "name": "guardarErroneos",
       "credentials": {
@@ -279,10 +225,7 @@
       },
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
-      "position": [
-        1536,
-        -128
-      ],
+      "position": [1536, -128],
       "id": "a9f3e8d1-4b2c-4f5e-8a1d-9c7e5f6d8e9f",
       "name": "responderMensajeErroneo",
       "onError": "continueErrorOutput",
@@ -304,10 +247,7 @@
       },
       "type": "@n8n/n8n-nodes-langchain.sentimentAnalysis",
       "typeVersion": 1.1,
-      "position": [
-        1248,
-        112
-      ],
+      "position": [1248, 112],
       "id": "29665623-9805-457f-a354-a3659a1d9035",
       "name": "analizarMensajeSoporte",
       "onError": "continueErrorOutput"
@@ -395,10 +335,7 @@
       },
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.3,
-      "position": [
-        1024,
-        -16
-      ],
+      "position": [1024, -16],
       "id": "59465879-a8c7-4ea1-9d26-54f9c92b33db",
       "name": "categoria",
       "onError": "continueErrorOutput"
@@ -414,10 +351,7 @@
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3,
-      "position": [
-        672,
-        0
-      ],
+      "position": [672, 0],
       "id": "3f3bd613-60dc-448c-abe1-ac35ef7ec707",
       "name": "clasificarMensaje",
       "onError": "continueErrorOutput"
@@ -429,10 +363,7 @@
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
       "typeVersion": 1,
-      "position": [
-        1584,
-        256
-      ],
+      "position": [1584, 256],
       "id": "172454a8-71e5-4b3a-b645-0352002e5981",
       "name": "Google Gemini Chat Model1",
       "credentials": {
@@ -453,10 +384,7 @@
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3,
-      "position": [
-        1600,
-        64
-      ],
+      "position": [1600, 64],
       "id": "2606fcc4-25aa-491e-a0f0-2fe468924a1c",
       "name": "accionIA"
     },
@@ -469,10 +397,7 @@
       },
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
       "typeVersion": 1.3,
-      "position": [
-        832,
-        192
-      ],
+      "position": [832, 192],
       "id": "4724e878-5299-4924-a1e3-0b941343f9dc",
       "name": "Structured Output Parser1"
     },
@@ -482,10 +407,7 @@
       },
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
       "typeVersion": 1.3,
-      "position": [
-        1760,
-        256
-      ],
+      "position": [1760, 256],
       "id": "1e203da7-dc4b-40f7-b7e7-ca0478a93543",
       "name": "Structured Output Parser2"
     },
@@ -592,10 +514,7 @@
       },
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
-      "position": [
-        2112,
-        64
-      ],
+      "position": [2112, 64],
       "id": "870259ee-f925-40ee-948e-feb597817183",
       "name": "Append row in sheet",
       "onError": "continueErrorOutput",
@@ -613,10 +532,7 @@
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
       "typeVersion": 1,
-      "position": [
-        944,
-        416
-      ],
+      "position": [944, 416],
       "id": "7b634753-5c54-469f-81fb-06fb8128be08",
       "name": "Google Gemini Chat Model2",
       "credentials": {
@@ -635,10 +551,7 @@
       },
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
-      "position": [
-        1952,
-        64
-      ],
+      "position": [1952, 64],
       "id": "3400a0fc-0b4b-41c0-9fdd-a0681387231d",
       "name": "enviarCorreo",
       "onError": "continueErrorOutput",
@@ -657,26 +570,7 @@
       "main": [
         [
           {
-            "node": "fomularioWeb",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
             "node": "formularioBase",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "fomularioWeb": {
-      "main": [
-        [],
-        [
-          {
-            "node": "enviarMensajeError",
             "type": "main",
             "index": 0
           }
