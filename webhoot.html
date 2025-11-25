@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Moments | Conecta Emociones</title>
+    <meta name="description"
+        content="Conserva tus mejores momentos con tus seres queridos. Servicios de streaming profesional para eventos.">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,600;0,800;1,600&display=swap"
+        rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    },
+                    colors: {
+                        brand: {
+                            gold: '#D4AF37',
+                            dark: '#1a1a1a',
+                            warm: '#FFF5E1'
+                        }
+                    },
+                    animation: {
+                        'ken-burns': 'kenBurns 20s ease-out infinite alternate',
+                        'fade-in': 'fadeIn 1s ease-out forwards',
+                        'slide-up': 'slideUp 0.8s ease-out forwards',
+                    },
+                    keyframes: {
+                        kenBurns: {
+                            '0%': { transform: 'scale(1)' },
+                            '100%': { transform: 'scale(1.1) translate(-10px, -5px)' },
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { opacity: '0', transform: 'translateY(30px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Estilos Cinematográficos */
+        body {
+            background-color: #000;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        /* Fondo Animado */
+        .hero-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .hero-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            /* Imagen generada localmente */
+            background-image: url("EAcqniW.jpeg");
+            background-position: center;
+            background-size: cover;
+            filter: brightness(0.4) contrast(1.1);
+            /* Oscurecer para legibilidad */
+        }
+
+        /* Overlay Gradiente */
+        .hero-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to right, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.6) 50%, rgba(0, 0, 0, 0.3) 100%);
+        }
+
+        /* Glass Card Refinada */
+        .glass-card {
+            background: rgba(20, 20, 20, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+        }
+
+        /* Inputs Elegantes */
+        .input-field {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            transition: all 0.3s ease;
+        }
+
+        .input-field:focus {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: #D4AF37;
+            /* Gold */
+            outline: none;
+        }
+
+        .input-label {
+            color: #aaa;
+        }
+
+        .input-field:focus~.input-label,
+        .input-field:not(:placeholder-shown)~.input-label {
+            color: #D4AF37;
+        }
+
+        /* Botón Premium Gold */
+        .btn-gold {
+            background: linear-gradient(135deg, #D4AF37 0%, #B49328 100%);
+            color: #000;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .btn-gold:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.5);
+            filter: brightness(1.1);
+        }
+
+        /* Loader */
+        .loader {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #000;
+            border-bottom-color: transparent;
+            border-radius: 50%;
+            display: inline-block;
+            animation: rotation 1s linear infinite;
+        }
+
+        @keyframes rotation {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body class="antialiased font-sans selection:bg-brand-gold selection:text-black">
+
+    <!-- Fondo Cinematográfico -->
+    <div class="hero-bg">
+        <div class="hero-image animate-ken-burns"></div>
+        <div class="hero-overlay"></div>
+    </div>
+
+    <!-- Contenedor Principal -->
+    <div
+        class="relative z-10 min-h-screen flex flex-col lg:flex-row items-center justify-center p-6 lg:p-16 gap-12 max-w-8xl mx-auto">
+
+        <!-- Columna Izquierda: Mensaje Emocional -->
+        <div class="w-full lg:w-7/12 text-center lg:text-left space-y-8 animate-slide-up">
+
+            <!-- Tagline -->
+            <div
+                class="inline-block px-3 py-1 border border-brand-gold/50 rounded text-brand-gold text-xs tracking-[0.2em] uppercase font-medium mb-2">
+                Live Moments Production
+            </div>
+
+            <!-- Título Principal -->
+            <h1 class="font-serif text-5xl md:text-6xl lg:text-7xl leading-tight text-white drop-shadow-lg">
+                Conserva tus <br>
+                <span class="italic text-brand-gold">mejores momentos</span> <br>
+                con tus seres queridos.
+            </h1>
+
+            <!-- Descripción -->
+            <p class="text-lg md:text-xl text-gray-300 font-light max-w-2xl mx-auto lg:mx-0 leading-relaxed">
+                La distancia es solo física. Ofrecemos servicios de streaming profesional multicámara para que nadie se
+                pierda tu celebración.
+                <span class="block mt-4 text-white/90 font-normal">
+                    🎥 Calidad Cine &nbsp;|&nbsp; 📡 Conexión Global &nbsp;|&nbsp; ❤️ Experiencia Inolvidable
+                </span>
+            </p>
+
+            <!-- Botón CTA (Móvil) -->
+            <div class="lg:hidden pt-4">
+                <a href="#formulario" class="btn-gold px-8 py-4 rounded-full inline-block w-full">
+                    Reservar Fecha
+                </a>
+            </div>
+
+        </div>
+
+        <!-- Columna Derecha: Formulario (Glass Card) -->
+        <div id="formulario" class="w-full lg:w-5/12 xl:w-4/12 animate-slide-up" style="animation-delay: 0.2s;">
+            <div class="glass-card rounded-2xl p-8 md:p-10">
+
+                <div class="text-center mb-8">
+                    <h3 class="font-serif text-3xl text-white mb-2">Comienza la Magia</h3>
+                    <p class="text-gray-400 text-sm">Déjanos tus datos y diseñaremos una experiencia a medida.</p>
+                </div>
+
+                <form id="requestForm" class="space-y-5">
+
+                    <!-- Nombre -->
+                    <div class="relative group">
+                        <input type="text" id="usuario" name="usuario"
+                            class="input-field block w-full px-4 py-3.5 rounded-lg text-sm peer placeholder-transparent"
+                            placeholder="Nombre" required>
+                        <label for="usuario"
+                            class="input-label absolute left-4 top-3.5 text-sm transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-3.5 peer-focus:-top-2.5 peer-focus:text-xs peer-focus:bg-black/80 peer-focus:px-1 peer-not-placeholder-shown:-top-2.5 peer-not-placeholder-shown:text-xs peer-not-placeholder-shown:bg-black/80 peer-not-placeholder-shown:px-1 pointer-events-none">
+                            Nombre Completo
+                        </label>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="relative group">
+                        <input type="email" id="correo_electronico" name="correo_electronico"
+                            class="input-field block w-full px-4 py-3.5 rounded-lg text-sm peer placeholder-transparent"
+                            placeholder="Email" required>
+                        <label for="correo_electronico"
+                            class="input-label absolute left-4 top-3.5 text-sm transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-3.5 peer-focus:-top-2.5 peer-focus:text-xs peer-focus:bg-black/80 peer-focus:px-1 peer-not-placeholder-shown:-top-2.5 peer-not-placeholder-shown:text-xs peer-not-placeholder-shown:bg-black/80 peer-not-placeholder-shown:px-1 pointer-events-none">
+                            Correo Electrónico
+                        </label>
+                    </div>
+
+                    <!-- Teléfono -->
+                    <div class="relative group">
+                        <input type="tel" id="numero_telefono" name="numero_telefono"
+                            class="input-field block w-full px-4 py-3.5 rounded-lg text-sm peer placeholder-transparent"
+                            placeholder="Teléfono" required>
+                        <label for="numero_telefono"
+                            class="input-label absolute left-4 top-3.5 text-sm transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-3.5 peer-focus:-top-2.5 peer-focus:text-xs peer-focus:bg-black/80 peer-focus:px-1 peer-not-placeholder-shown:-top-2.5 peer-not-placeholder-shown:text-xs peer-not-placeholder-shown:bg-black/80 peer-not-placeholder-shown:px-1 pointer-events-none">
+                            Teléfono / WhatsApp
+                        </label>
+                    </div>
+
+                    <!-- Mensaje -->
+                    <div class="relative group">
+                        <textarea id="mensaje" name="mensaje" rows="3"
+                            class="input-field block w-full px-4 py-3.5 rounded-lg text-sm peer placeholder-transparent resize-none"
+                            placeholder="Mensaje" required></textarea>
+                        <label for="mensaje"
+                            class="input-label absolute left-4 top-3.5 text-sm transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-3.5 peer-focus:-top-2.5 peer-focus:text-xs peer-focus:bg-black/80 peer-focus:px-1 peer-not-placeholder-shown:-top-2.5 peer-not-placeholder-shown:text-xs peer-not-placeholder-shown:bg-black/80 peer-not-placeholder-shown:px-1 pointer-events-none">
+                            Detalles del Evento (Fecha, Lugar...)
+                        </label>
+                    </div>
+
+                    <!-- Botón Submit -->
+                    <button type="submit" id="submitButton"
+                        class="btn-gold w-full py-4 rounded-lg flex justify-center items-center gap-2 mt-2">
+                        <span>SOLICITAR PRESUPUESTO</span>
+                        <div id="loader" class="loader hidden"></div>
+                    </button>
+
+                    <!-- Feedback -->
+                    <div id="feedbackMessage" class="hidden p-3 rounded text-xs text-center font-medium"></div>
+
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Lógica JS (Mantenida) -->
+    <script>
+        const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        const isNumeric = (phone) => /^\+?[\d\s\-\(\)]+$/.test(phone);
+
+        const showFeedback = (message, type = 'success') => {
+            const el = document.getElementById('feedbackMessage');
+            el.textContent = message;
+            el.className = `p-3 rounded text-xs text-center font-medium transition-all ${type === 'success'
+                ? 'bg-green-500/20 text-green-300 border border-green-500/30'
+                : 'bg-red-500/20 text-red-300 border border-red-500/30'
+                }`;
+            el.classList.remove('hidden');
+        };
+
+        document.getElementById('requestForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const form = e.target;
+            const btn = document.getElementById('submitButton');
+            const btnText = btn.querySelector('span');
+            const loader = document.getElementById('loader');
+
+            const data = {
+                usuario: form.usuario.value.trim(),
+                correo_electronico: form.correo_electronico.value.trim(),
+                numero_telefono: form.numero_telefono.value.trim(),
+                mensaje: form.mensaje.value.trim()
+            };
+
+            if (!data.usuario || !data.correo_electronico || !data.numero_telefono || !data.mensaje) {
+                showFeedback('Por favor completa todos los campos.', 'error');
+                return;
+            }
+            if (!isValidEmail(data.correo_electronico)) {
+                showFeedback('Correo electrónico inválido.', 'error');
+                return;
+            }
+            if (!isNumeric(data.numero_telefono)) {
+                showFeedback('Número de teléfono inválido.', 'error');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.classList.add('opacity-80', 'cursor-not-allowed');
+            btnText.textContent = 'ENVIANDO...';
+            loader.classList.remove('hidden');
+            document.getElementById('feedbackMessage').classList.add('hidden');
+
+            const webhookUrl = "https://erjgomezf.app.n8n.cloud/webhook/webcam";
+
+            try {
+                const response = await fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) throw new Error('Server Error');
+
+                showFeedback('¡Gracias! Tu solicitud ha sido recibida. Te contactaremos pronto.', 'success');
+                form.reset();
+
+            } catch (error) {
+                console.error(error);
+                showFeedback('Error de conexión. Inténtalo de nuevo.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('opacity-80', 'cursor-not-allowed');
+                btnText.textContent = 'SOLICITAR PRESUPUESTO';
+                loader.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+
+</html>
