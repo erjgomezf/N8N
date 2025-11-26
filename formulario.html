@@ -1,0 +1,1813 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solicitud de Servicio - Streaming Profesional</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: #1a1a1a;
+            color: #fff;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            /* Imagen de fondo dinámica por defecto */
+            background-image: url('https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&q=80');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            transition: background-image 0.5s ease-in-out;
+        }
+
+        /* Overlay oscuro para mejorar legibilidad */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to right, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.8) 100%);
+            z-index: -1;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 40px;
+            min-height: 80vh;
+        }
+
+        /* Panel Izquierdo (Slogan) - Ahora transparente */
+        .left-panel {
+            flex: 1;
+            padding: 40px;
+            /* Sin fondo propio */
+        }
+
+        /* Eliminamos el pseudo-elemento del panel izquierdo anterior */
+        .left-panel::before {
+            display: none;
+        }
+
+        .left-content {
+            position: relative;
+            z-index: 2;
+            color: #fff;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+
+        .brand-tag {
+            background: rgba(212, 175, 55, 0.2);
+            border: 1px solid #D4AF37;
+            color: #D4AF37;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            display: inline-block;
+            margin-bottom: 20px;
+            backdrop-filter: blur(5px);
+        }
+
+        .main-slogan {
+            font-size: 4rem; /* Más grande */
+            line-height: 1.1;
+            font-weight: 800;
+            margin-bottom: 25px;
+        }
+
+        .main-slogan span {
+            color: #D4AF37;
+            display: block;
+            font-style: italic; /* Estilo más elegante */
+        }
+
+        .sub-slogan {
+            font-size: 1.2rem;
+            color: #eee;
+            line-height: 1.6;
+            max-width: 80%;
+        }
+
+        /* Panel Derecho (Formulario) - Ahora es la tarjeta */
+        .right-panel {
+            flex: 0 0 500px; /* Ancho fijo para el formulario */
+            padding: 40px;
+            background: rgba(0, 0, 0, 0.6); /* Fondo semi-transparente oscuro */
+            backdrop-filter: blur(20px); /* Efecto glassmorphism fuerte */
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                flex-direction: column;
+                padding: 40px 20px;
+            }
+            
+            .left-panel {
+                text-align: center;
+                padding: 20px;
+            }
+
+            .sub-slogan {
+                margin: 0 auto;
+            }
+
+            .right-panel {
+                width: 100%;
+                flex: none;
+            }
+
+            .main-slogan {
+                font-size: 2.5rem;
+            }
+        }
+
+        h1 {
+            color: #D4AF37;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #aaa;
+            margin-bottom: 40px;
+            font-size: 1.1rem;
+        }
+
+        .form-section {
+            margin-bottom: 30px;
+        }
+
+        .form-section h2 {
+            color: #D4AF37;
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(212, 175, 55, 0.3);
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+            animation: fadeIn 0.3s ease-in;
+            position: relative;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #D4AF37;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        label .required {
+            color: #ff6b6b;
+            margin-left: 4px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 16px;
+            padding-right: 45px; /* Espacio para el icono */
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(212, 175, 55, 0.3);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #D4AF37;
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        input::placeholder, textarea::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        select {
+            cursor: pointer;
+        }
+
+        select option {
+            background: #2d2d2d;
+            color: #fff;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .checkbox-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .checkbox-item input[type="checkbox"]:checked {
+            transform: scale(1.2) rotate(360deg);
+        }
+
+        .checkbox-item label {
+            margin: 0;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .error-message {
+            color: #ff6b6b;
+            font-size: 0.85rem;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .form-group.error input,
+        .form-group.error select,
+        .form-group.error textarea {
+            border-color: #ff6b6b;
+        }
+
+        .form-group.error .error-message {
+            display: block;
+        }
+
+        /* Estilos para validación positiva */
+        .form-group.valid input,
+        .form-group.valid select,
+        .form-group.valid textarea {
+            border-color: #51cf66;
+        }
+
+        .success-message {
+            color: #51cf66;
+            font-size: 0.85rem;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .form-group.valid .success-message {
+            display: block;
+        }
+
+        /* Iconos de validación */
+        .validation-icon {
+            position: absolute;
+            right: 15px;
+            top: 38px;
+            font-size: 1.2rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .form-group.valid .validation-icon.check {
+            opacity: 1;
+            color: #51cf66;
+        }
+
+        .form-group.error .validation-icon.cross {
+            opacity: 1;
+            color: #ff6b6b;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #D4AF37 0%, #F4D03F 100%);
+            color: #1a1a1a;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-submit::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn-submit:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(212, 175, 55, 0.4);
+        }
+
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-submit.loading {
+            pointer-events: none;
+        }
+
+        .btn-submit.loading::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            top: 50%;
+            left: 50%;
+            margin-left: -8px;
+            margin-top: -8px;
+            border: 2px solid #1a1a1a;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Animación de éxito */
+        .success-animation {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(10px);
+            border: 2px solid #51cf66;
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            z-index: 10000;
+            opacity: 0;
+            animation: fadeInScale 0.5s ease forwards;
+        }
+
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        .success-animation h3 {
+            color: #51cf66;
+            font-size: 2rem;
+            margin-bottom: 15px;
+        }
+
+        .success-animation p {
+            color: #ddd;
+            font-size: 1.1rem;
+        }
+
+        .success-checkmark {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            border-radius: 50%;
+            display: block;
+            stroke-width: 3;
+            stroke: #51cf66;
+            stroke-miterlimit: 10;
+            box-shadow: inset 0px 0px 0px #51cf66;
+            animation: fill 0.4s ease-in-out 0.4s forwards, scale 0.3s ease-in-out 0.9s both;
+        }
+
+        .success-checkmark__circle {
+            stroke-dasharray: 166;
+            stroke-dashoffset: 166;
+            stroke-width: 3;
+            stroke-miterlimit: 10;
+            stroke: #51cf66;
+            fill: none;
+            animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+        }
+
+        .success-checkmark__check {
+            transform-origin: 50% 50%;
+            stroke-dasharray: 48;
+            stroke-dashoffset: 48;
+            animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
+        }
+
+        @keyframes stroke {
+            100% {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        @keyframes scale {
+            0%, 100% {
+                transform: none;
+            }
+            50% {
+                transform: scale3d(1.1, 1.1, 1);
+            }
+        }
+
+        @keyframes fill {
+            100% {
+                box-shadow: inset 0px 0px 0px 30px #51cf66;
+            }
+        }
+
+        #dynamicFields {
+            margin-top: 20px;
+        }
+
+        .info-box {
+            background: rgba(212, 175, 55, 0.1);
+            border-left: 4px solid #D4AF37;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .info-box p {
+            color: #ddd;
+            line-height: 1.6;
+        }
+
+        /* Estilos para tooltips de paquetes */
+        .package-option {
+            position: relative;
+            cursor: help;
+        }
+
+        .package-tooltip {
+            position: absolute;
+            left: 100%;
+            top: 0;
+            margin-left: 15px;
+            width: 300px;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(10px);
+            border: 2px solid #D4AF37;
+            border-radius: 12px;
+            padding: 15px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateX(-10px);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        .package-option:hover .package-tooltip {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(0);
+        }
+
+        .package-tooltip h4 {
+            color: #D4AF37;
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+            padding-bottom: 8px;
+        }
+
+        .package-tooltip ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .package-tooltip li {
+            color: #ddd;
+            font-size: 0.9rem;
+            padding: 5px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .package-tooltip li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #51cf66;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .package-tooltip {
+                position: fixed;
+                left: 50%;
+                top: 50%;
+                transform: translate(-50%, -50%);
+                margin-left: 0;
+                width: 90%;
+                max-width: 300px;
+            }
+
+            .package-option:hover .package-tooltip {
+                transform: translate(-50%, -50%);
+            }
+        }
+
+        /* Estilos del Stepper (Wizard) */
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 40px;
+            position: relative;
+            padding: 0 20px;
+        }
+
+        .step-indicator::before {
+            content: '';
+            position: absolute;
+            top: 15px;
+            left: 40px;
+            right: 40px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.1);
+            z-index: 0;
+        }
+
+        .step {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            width: 100%;
+        }
+
+        .step-circle {
+            width: 30px;
+            height: 30px;
+            background: #2d2d2d;
+            border: 2px solid rgba(212, 175, 55, 0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-weight: 600;
+            color: #aaa;
+            transition: all 0.3s ease;
+        }
+
+        .step.active .step-circle {
+            border-color: #D4AF37;
+            background: #D4AF37;
+            color: #1a1a1a;
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+        }
+
+        .step.completed .step-circle {
+            border-color: #51cf66;
+            background: #51cf66;
+            color: #fff;
+        }
+
+        .step-label {
+            font-size: 0.85rem;
+            color: #aaa;
+            display: none;
+            transition: color 0.3s ease;
+        }
+
+        .step.active .step-label,
+        .step.completed .step-label {
+            color: #fff;
+        }
+
+        @media (min-width: 768px) {
+            .step-label { display: block; }
+        }
+
+        /* Pasos del formulario */
+        .form-step {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .form-step.active {
+            display: block;
+        }
+
+        /* Botones de navegación */
+        .form-navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+            gap: 15px;
+        }
+
+        .btn-nav {
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: none;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-prev {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .btn-prev:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-next {
+            background: linear-gradient(135deg, #D4AF37 0%, #F4D03F 100%);
+            color: #1a1a1a;
+            flex: 1;
+        }
+
+        .btn-next:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Panel Izquierdo -->
+        <div class="left-panel">
+            <div class="left-content">
+                <div class="brand-tag">LIVE MOMENTS PRODUCTION</div>
+                <h1 class="main-slogan" id="dynamicSlogan">
+                    Conserva tus <br>
+                    <span>mejores momentos</span>
+                </h1>
+                <p class="sub-slogan" id="dynamicSubSlogan">
+                    La distancia es solo física. Ofrecemos servicios de streaming profesional multicámara para que nadie se pierda tu celebración.
+                </p>
+            </div>
+        </div>
+
+        <!-- Panel Derecho -->
+        <div class="right-panel">
+            <h2 style="text-align: center; margin-bottom: 10px; color: #D4AF37;">Comienza la Magia</h2>
+            <p class="subtitle">Déjanos tus datos y diseñaremos una experiencia a medida.</p>
+
+        <!-- Indicador de Pasos -->
+        <div class="step-indicator">
+            <div class="step active">
+                <div class="step-circle">1</div>
+                <div class="step-label">Tipo de Evento</div>
+            </div>
+            <div class="step">
+                <div class="step-circle">2</div>
+                <div class="step-label">Detalles</div>
+            </div>
+            <div class="step">
+                <div class="step-circle">3</div>
+                <div class="step-label">Paquete</div>
+            </div>
+            <div class="step">
+                <div class="step-circle">4</div>
+                <div class="step-label">Contacto</div>
+            </div>
+        </div>
+
+        <form id="eventForm">
+            <!-- PASO 1: TIPO DE EVENTO -->
+            <div class="form-step active">
+                <div class="form-section">
+                    <h2>📋 Tipo de Evento</h2>
+                    
+                    <div class="form-group">
+                        <label for="tipo_evento">Selecciona el tipo de evento <span class="required">*</span></label>
+                        <select id="tipo_evento" name="tipo_evento" required>
+                            <option value="">-- Selecciona una opción --</option>
+                            <option value="Eventos sociales">🎊 Eventos Sociales</option>
+                            <option value="Conferencias y eventos corporativos">🏢 Conferencias y Eventos Corporativos</option>
+                            <option value="E-Sport y Gaming">🎮 E-Sports y Gaming</option>
+                            <option value="Conciertos y Eventos Artísticos">🎵 Conciertos y Eventos Artísticos</option>
+                            <option value="Eventos Religiosos">⛪ Eventos Religiosos</option>
+                            <option value="Eventos Deportivos">⚽ Eventos Deportivos</option>
+                        </select>
+                        <span class="error-message">Por favor selecciona un tipo de evento</span>
+                    </div>
+
+                    <!-- Campos dinámicos se insertarán aquí -->
+                    <div id="dynamicFields"></div>
+                </div>
+            </div>
+
+            <!-- PASO 2: INFORMACIÓN DEL EVENTO -->
+            <div class="form-step">
+                <div class="form-section">
+                    <h2>📅 Información del Evento</h2>
+                    
+                    <div class="form-group">
+                        <label for="fecha_evento">Fecha del evento <span class="required">*</span></label>
+                        <input type="date" id="fecha_evento" name="fecha_evento" required>
+                        <span class="error-message">Selecciona una fecha futura</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ubicacion_evento">Ubicación del evento <span class="required">*</span></label>
+                        <input type="text" id="ubicacion_evento" name="ubicacion_evento" 
+                               placeholder="Ciudad, Estado o dirección específica" required>
+                        <span class="error-message">Ingresa la ubicación del evento</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="duracion_estimada">Duración estimada <span class="required">*</span></label>
+                        <select id="duracion_estimada" name="duracion_estimada" required>
+                            <option value="">-- Selecciona --</option>
+                            <option value="2 horas">2 horas</option>
+                            <option value="4 horas">4 horas</option>
+                            <option value="6 horas">6 horas</option>
+                            <option value="8 horas">8 horas</option>
+                            <option value="Todo el día">Todo el día</option>
+                            <option value="Varios días">Varios días</option>
+                        </select>
+                        <span class="error-message">Selecciona la duración estimada</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="tiene_internet_venue">¿El lugar cuenta con internet? <span class="required">*</span></label>
+                        <select id="tiene_internet_venue" name="tiene_internet_venue" required>
+                            <option value="">-- Selecciona --</option>
+                            <option value="Sí">Sí</option>
+                            <option value="No">No</option>
+                            <option value="No estoy seguro">No estoy seguro</option>
+                        </select>
+                        <span class="error-message">Selecciona una opción</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PASO 3: PAQUETE Y ADD-ONS -->
+            <div class="form-step">
+                <div class="form-section">
+                    <h2>📦 Paquete y Servicios</h2>
+                    
+                    <div class="form-group">
+                        <label for="paquete_interes">Paquete de interés <span class="required">*</span></label>
+                        <select id="paquete_interes" name="paquete_interes" required>
+                            <option value="">-- Selecciona --</option>
+                            <option value="Básico" class="package-option" data-package="basico">🥉 Básico - 1 cámara HD</option>
+                            <option value="Estándar" class="package-option" data-package="estandar">🥈 Estándar - 2 cámaras HD + overlays básicos</option>
+                            <option value="Premium" class="package-option" data-package="premium">🥇 Premium - 3 cámaras HD + director técnico</option>
+                            <option value="Enterprise" class="package-option" data-package="enterprise">💎 Enterprise - 4 cámaras 4K + multi-plataforma</option>
+                            <option value="No estoy seguro">❓ No estoy seguro</option>
+                        </select>
+                        <span class="error-message">Selecciona un paquete</span>
+                        
+                        <!-- Tooltip que aparecerá al hacer hover -->
+                        <div id="packageTooltip" class="package-tooltip" style="display: none;">
+                            <h4 id="tooltipTitle"></h4>
+                            <ul id="tooltipContent"></ul>
+                        </div>
+                    </div>
+
+                    <!-- Info box con detalles de paquetes -->
+                    <div class="info-box" style="margin-top: 15px;">
+                        <p><strong>💡 Pasa el mouse sobre cada paquete para ver los detalles completos</strong></p>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Servicios adicionales (opcional)</label>
+                        <div class="checkbox-group">
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="addon_camara" name="add_ons" value="Cámara + Micrófono Adicional">
+                                <label for="addon_camara">📹 Cámaras + Micrófonos adicionales</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="addon_starlink" name="add_ons" value="Internet Starlink">
+                                <label for="addon_starlink">🛰️ Internet Starlink (Garantía de conectividad)</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="addon_overlays" name="add_ons" value="Overlays Personalizados">
+                                <label for="addon_overlays">🎨 Overlays Personalizados</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="addon_plataforma" name="add_ons" value="Plataforma Adicional">
+                                <label for="addon_plataforma">📺 Plataforma Adicional (Solo Enterprise)</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PASO 4: DATOS DE CONTACTO -->
+            <div class="form-step">
+                <div class="form-section">
+                    <h2>👤 Datos de Contacto</h2>
+                    
+                    <div class="form-group">
+                        <label for="nombre_cliente">Nombre completo <span class="required">*</span></label>
+                        <input type="text" id="nombre_cliente" name="nombre_cliente" 
+                               placeholder="Juan Pérez" required>
+                        <span class="validation-icon check">✓</span>
+                        <span class="validation-icon cross">✗</span>
+                        <span class="error-message">Ingresa tu nombre completo (mínimo 3 caracteres)</span>
+                        <span class="success-message">✓ Nombre válido</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email_cliente">Correo electrónico <span class="required">*</span></label>
+                        <input type="email" id="email_cliente" name="email_cliente" 
+                               placeholder="juan@email.com" required>
+                        <span class="validation-icon check">✓</span>
+                        <span class="validation-icon cross">✗</span>
+                        <span class="error-message">Ingresa un email válido</span>
+                        <span class="success-message">✓ Email válido</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="telefono_cliente">Teléfono / WhatsApp <span class="required">*</span></label>
+                        <input type="tel" id="telefono_cliente" name="telefono_cliente" 
+                               placeholder="+58 412 1234567" required>
+                        <span class="validation-icon check">✓</span>
+                        <span class="validation-icon cross">✗</span>
+                        <span class="error-message">Ingresa un teléfono válido (mínimo 10 dígitos)</span>
+                        <span class="success-message">✓ Teléfono válido</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="comentarios_adicionales">Comentarios adicionales (opcional)</label>
+                        <textarea id="comentarios_adicionales" name="comentarios_adicionales" 
+                                  placeholder="Cuéntanos más sobre tu evento, necesidades especiales, presupuesto aproximado, etc."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botones de Navegación -->
+            <div class="form-navigation">
+                <button type="button" id="prevBtn" class="btn-nav btn-prev" onclick="nextPrev(-1)" style="display: none;">Anterior</button>
+                <button type="button" id="nextBtn" class="btn-nav btn-next" onclick="nextPrev(1)">Siguiente</button>
+                <button type="submit" id="submitBtn" class="btn-submit" style="display: none;">Enviar Solicitud</button>
+            </div>
+        </form>
+        </div> <!-- Fin right-panel -->
+    </div> <!-- Fin container -->
+
+    <script>
+        // ========================================
+        // CONFIGURACIÓN DE CAMPOS DINÁMICOS
+        // ========================================
+        
+        const camposDinamicos = {
+            "Eventos sociales": [
+                {
+                    type: "select",
+                    name: "tipo_celebracion",
+                    label: "Tipo de celebración",
+                    required: true,
+                    options: ["Boda", "Quinceañera", "Aniversario", "Baby Shower", "Otro"]
+                },
+                {
+                    type: "number",
+                    name: "numero_invitados",
+                    label: "Número aproximado de invitados",
+                    required: false,
+                    placeholder: "150"
+                },
+                {
+                    type: "checkboxes",
+                    name: "momentos_clave",
+                    label: "Momentos clave a transmitir",
+                    required: false,
+                    options: ["Toda la Ceremonia", "Entrada del evento", "Momentos especiales", "Brindis"]
+                }
+            ],
+            "Conferencias y eventos corporativos": [
+                {
+                    type: "text",
+                    name: "nombre_empresa",
+                    label: "Nombre de la empresa",
+                    required: true,
+                    placeholder: "Empresa XYZ C.A."
+                },
+                {
+                    type: "select",
+                    name: "tipo_conferencia",
+                    label: "Tipo de conferencia",
+                    required: true,
+                    options: ["Seminario", "Capacitación", "Lanzamiento de producto", "Asamblea", "Evento corporativo"]
+                },
+                {
+                    type: "number",
+                    name: "numero_speakers",
+                    label: "Número de speakers/ponentes",
+                    required: false,
+                    placeholder: "3"
+                },
+                {
+                    type: "number",
+                    name: "numero_asistentes",
+                    label: "Número aproximado de asistentes",
+                    required: false,
+                    placeholder: "200"
+                },
+                {
+                    type: "select",
+                    name: "necesita_grabacion",
+                    label: "¿Necesita grabación del evento?",
+                    required: false,
+                    options: ["Sí", "No"]
+                },
+                {
+                    type: "checkboxes",
+                    name: "plataformas_destino",
+                    label: "Plataformas de destino",
+                    required: false,
+                    options: ["YouTube", "Facebook", "LinkedIn", "Plataforma privada"]
+                }
+            ],
+            "E-Sport y Gaming": [
+                {
+                    type: "text",
+                    name: "juego_plataforma",
+                    label: "Juego o plataforma",
+                    required: true,
+                    placeholder: "League of Legends, Fortnite, etc."
+                },
+                {
+                    type: "select",
+                    name: "tipo_torneo",
+                    label: "Tipo de torneo",
+                    required: true,
+                    options: ["Local", "Nacional", "Internacional", "Amistoso"]
+                },
+                {
+                    type: "number",
+                    name: "numero_equipos",
+                    label: "Número de equipos",
+                    required: false,
+                    placeholder: "8"
+                },
+                {
+                    type: "number",
+                    name: "numero_jugadores",
+                    label: "Número total de jugadores",
+                    required: false,
+                    placeholder: "40"
+                },
+                {
+                    type: "select",
+                    name: "necesita_scoreboards",
+                    label: "¿Necesita scoreboards?",
+                    required: false,
+                    options: ["Sí", "No"]
+                },
+                {
+                    type: "select",
+                    name: "necesita_comentaristas",
+                    label: "¿Habrá comentaristas?",
+                    required: false,
+                    options: ["Sí", "No"]
+                },
+                {
+                    type: "checkboxes",
+                    name: "plataformas_destino",
+                    label: "Plataformas de streaming",
+                    required: false,
+                    options: ["Twitch", "YouTube", "Facebook Gaming", "Kick"]
+                }
+            ],
+            "Conciertos y Eventos Artísticos": [
+                {
+                    type: "select",
+                    name: "tipo_evento_artistico",
+                    label: "Tipo de evento",
+                    required: true,
+                    options: ["Concierto", "Teatro", "Stand-up comedy", "Performance", "Festival"]
+                },
+                {
+                    type: "text",
+                    name: "nombre_artista",
+                    label: "Nombre del artista/banda",
+                    required: false,
+                    placeholder: "Banda XYZ"
+                },
+                {
+                    type: "number",
+                    name: "numero_artistas",
+                    label: "Número de artistas",
+                    required: false,
+                    placeholder: "5"
+                },
+                {
+                    type: "select",
+                    name: "tipo_venue",
+                    label: "Tipo de venue",
+                    required: false,
+                    options: ["Cerrado", "Abierto", "Teatro", "Club"]
+                },
+                {
+                    type: "select",
+                    name: "necesita_audio_profesional",
+                    label: "¿Necesita audio profesional?",
+                    required: false,
+                    options: ["Sí", "No"]
+                }
+            ],
+            "Eventos Religiosos": [
+                {
+                    type: "select",
+                    name: "tipo_ceremonia",
+                    label: "Tipo de ceremonia",
+                    required: true,
+                    options: ["Misa", "Culto", "Bautizo", "Primera Comunión", "Boda religiosa", "Otro"]
+                },
+                {
+                    type: "number",
+                    name: "numero_asistentes",
+                    label: "Número aproximado de asistentes",
+                    required: false,
+                    placeholder: "100"
+                },
+                {
+                    type: "select",
+                    name: "necesita_audio_claro",
+                    label: "¿Necesita audio especial para sermones/prédicas?",
+                    required: false,
+                    options: ["Sí", "No"]
+                }
+            ],
+            "Eventos Deportivos": [
+                {
+                    type: "text",
+                    name: "tipo_deporte",
+                    label: "Tipo de deporte",
+                    required: true,
+                    placeholder: "Fútbol, Baloncesto, etc."
+                },
+                {
+                    type: "select",
+                    name: "tipo_evento_deportivo",
+                    label: "Tipo de evento",
+                    required: true,
+                    options: ["Partido único", "Torneo", "Liga", "Amistoso"]
+                },
+                {
+                    type: "number",
+                    name: "numero_equipos",
+                    label: "Número de equipos",
+                    required: false,
+                    placeholder: "2"
+                },
+                {
+                    type: "select",
+                    name: "necesita_scoreboards",
+                    label: "¿Necesita scoreboards?",
+                    required: false,
+                    options: ["Sí", "No"]
+                },
+                {
+                    type: "select",
+                    name: "necesita_replays",
+                    label: "¿Necesita replays?",
+                    required: false,
+                    options: ["Sí", "No"]
+                },
+                {
+                    type: "select",
+                    name: "tipo_venue_deportivo",
+                    label: "Tipo de venue",
+                    required: false,
+                    options: ["Estadio", "Cancha abierta", "Gimnasio", "Otro"]
+                }
+            ]
+        };
+
+        // ========================================
+        // FUNCIONES PRINCIPALES
+        // ========================================
+
+        // Función para renderizar campos dinámicos
+        function renderizarCamposDinamicos(tipoEvento) {
+            const container = document.getElementById('dynamicFields');
+            container.innerHTML = ''; // Limpiar campos anteriores
+
+            if (!tipoEvento || !camposDinamicos[tipoEvento]) {
+                return;
+            }
+
+            const campos = camposDinamicos[tipoEvento];
+            
+            campos.forEach(campo => {
+                const formGroup = document.createElement('div');
+                formGroup.className = 'form-group';
+
+                const label = document.createElement('label');
+                label.textContent = campo.label;
+                if (campo.required) {
+                    const required = document.createElement('span');
+                    required.className = 'required';
+                    required.textContent = ' *';
+                    label.appendChild(required);
+                }
+                formGroup.appendChild(label);
+
+                // Crear el input según el tipo
+                if (campo.type === 'text' || campo.type === 'number') {
+                    const input = document.createElement('input');
+                    input.type = campo.type;
+                    input.name = campo.name;
+                    input.id = campo.name;
+                    if (campo.placeholder) input.placeholder = campo.placeholder;
+                    if (campo.required) input.required = true;
+                    formGroup.appendChild(input);
+                } else if (campo.type === 'select') {
+                    const select = document.createElement('select');
+                    select.name = campo.name;
+                    select.id = campo.name;
+                    if (campo.required) select.required = true;
+
+                    const defaultOption = document.createElement('option');
+                    defaultOption.value = '';
+                    defaultOption.textContent = '-- Selecciona --';
+                    select.appendChild(defaultOption);
+
+                    campo.options.forEach(opcion => {
+                        const option = document.createElement('option');
+                        option.value = opcion;
+                        option.textContent = opcion;
+                        select.appendChild(option);
+                    });
+
+                    formGroup.appendChild(select);
+                } else if (campo.type === 'checkboxes') {
+                    const checkboxGroup = document.createElement('div');
+                    checkboxGroup.className = 'checkbox-group';
+
+                    campo.options.forEach((opcion, index) => {
+                        const checkboxItem = document.createElement('div');
+                        checkboxItem.className = 'checkbox-item';
+
+                        const checkbox = document.createElement('input');
+                        checkbox.type = 'checkbox';
+                        checkbox.name = campo.name;
+                        checkbox.id = `${campo.name}_${index}`;
+                        checkbox.value = opcion;
+
+                        const checkboxLabel = document.createElement('label');
+                        checkboxLabel.htmlFor = `${campo.name}_${index}`;
+                        checkboxLabel.textContent = opcion;
+
+                        checkboxItem.appendChild(checkbox);
+                        checkboxItem.appendChild(checkboxLabel);
+                        checkboxGroup.appendChild(checkboxItem);
+                    });
+
+                    formGroup.appendChild(checkboxGroup);
+                }
+
+                const errorMessage = document.createElement('span');
+                errorMessage.className = 'error-message';
+                errorMessage.textContent = 'Este campo es obligatorio';
+                formGroup.appendChild(errorMessage);
+
+                container.appendChild(formGroup);
+            });
+        }
+
+        // ========================================
+        // VALIDACIÓN EN TIEMPO REAL
+        // ========================================
+
+        // Función para validar un campo
+        function validarCampo(input) {
+            const formGroup = input.closest('.form-group');
+            const valor = input.value.trim();
+            let esValido = false;
+
+            // Validar según el tipo de campo
+            if (input.id === 'nombre_cliente') {
+                esValido = valor.length >= 3;
+            } else if (input.id === 'email_cliente') {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                esValido = emailRegex.test(valor);
+            } else if (input.id === 'telefono_cliente') {
+                const telefonoLimpio = valor.replace(/\D/g, '');
+                esValido = telefonoLimpio.length >= 10;
+            } else if (input.required) {
+                esValido = valor.length > 0;
+            }
+
+            // Aplicar clases según validación
+            if (esValido) {
+                formGroup.classList.remove('error');
+                formGroup.classList.add('valid');
+            } else if (valor.length > 0) {
+                formGroup.classList.remove('valid');
+                formGroup.classList.add('error');
+            } else {
+                formGroup.classList.remove('valid', 'error');
+            }
+        }
+
+        // Event listeners para validación en tiempo real
+        // Nombre
+        document.getElementById('nombre_cliente').addEventListener('input', function() {
+            validarCampo(this);
+        });
+
+        // Email
+        document.getElementById('email_cliente').addEventListener('input', function() {
+            validarCampo(this);
+        });
+
+        // Teléfono
+        document.getElementById('telefono_cliente').addEventListener('input', function() {
+            validarCampo(this);
+        });
+
+        // ========================================
+        // TOOLTIPS DE PAQUETES
+        // ========================================
+
+        // Información detallada de cada paquete
+        const paquetesInfo = {
+            basico: {
+                titulo: "🥉 Paquete Básico",
+                items: [
+                    "1 cámara HD",
+                    "1 micrófono inalámbrico",
+                    "Streaming a 1 plataforma",
+                    "Sin overlays",
+                    "Operador técnico básico"
+                ]
+            },
+            estandar: {
+                titulo: "🥈 Paquete Estándar",
+                items: [
+                    "2 cámaras HD",
+                    "2 micrófonos inalámbricos",
+                    "Streaming a 1 plataforma",
+                    "Overlays básicos (templates predefinidos)",
+                    "Operador técnico básico"
+                ]
+            },
+            premium: {
+                titulo: "🥇 Paquete Premium",
+                items: [
+                    "3 cámaras HD",
+                    "3 micrófonos profesionales + mezclador",
+                    "Streaming a 1 plataforma",
+                    "Overlays avanzados (animaciones, lower thirds)",
+                    "Director técnico profesional"
+                ]
+            },
+            enterprise: {
+                titulo: "💎 Paquete Enterprise",
+                items: [
+                    "4 cámaras 4K",
+                    "4 micrófonos profesionales + mezclador",
+                    "Streaming simultáneo a hasta 3 plataformas",
+                    "Overlays avanzados + branding personalizado",
+                    "Director técnico + asistente"
+                ]
+            }
+        };
+
+        // Mostrar tooltip al hacer hover sobre el select
+        const selectPaquete = document.getElementById('paquete_interes');
+        const tooltip = document.getElementById('packageTooltip');
+        const tooltipTitle = document.getElementById('tooltipTitle');
+        const tooltipContent = document.getElementById('tooltipContent');
+
+        selectPaquete.addEventListener('mouseenter', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const packageType = selectedOption.getAttribute('data-package');
+            
+            if (packageType && paquetesInfo[packageType]) {
+                const info = paquetesInfo[packageType];
+                
+                // Actualizar contenido del tooltip
+                tooltipTitle.textContent = info.titulo;
+                tooltipContent.innerHTML = '';
+                
+                info.items.forEach(item => {
+                    const li = document.createElement('li');
+                    li.textContent = item;
+                    tooltipContent.appendChild(li);
+                });
+                
+                tooltip.style.display = 'block';
+                setTimeout(() => {
+                    tooltip.style.opacity = '1';
+                    tooltip.style.visibility = 'visible';
+                    tooltip.style.transform = 'translateX(0)';
+                }, 10);
+            }
+        });
+
+        selectPaquete.addEventListener('mouseleave', function() {
+            tooltip.style.opacity = '0';
+            tooltip.style.visibility = 'hidden';
+            tooltip.style.transform = 'translateX(-10px)';
+            setTimeout(() => {
+                tooltip.style.display = 'none';
+            }, 300);
+        });
+
+        // Actualizar tooltip al cambiar de opción
+        selectPaquete.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const packageType = selectedOption.getAttribute('data-package');
+            
+            if (packageType && paquetesInfo[packageType]) {
+                const info = paquetesInfo[packageType];
+                tooltipTitle.textContent = info.titulo;
+                tooltipContent.innerHTML = '';
+                
+                info.items.forEach(item => {
+                    const li = document.createElement('li');
+                    li.textContent = item;
+                    tooltipContent.appendChild(li);
+                });
+            }
+        });
+
+        // Event listener para cambio de tipo de evento
+        document.getElementById('tipo_evento').addEventListener('change', function() {
+            renderizarCamposDinamicos(this.value);
+        });
+
+        // Validación de fecha (debe ser futura)
+        document.getElementById('fecha_evento').addEventListener('change', function() {
+            const fechaSeleccionada = new Date(this.value);
+            const hoy = new Date();
+            hoy.setHours(0, 0, 0, 0);
+
+            if (fechaSeleccionada <= hoy) {
+                this.parentElement.classList.add('error');
+            } else {
+                this.parentElement.classList.remove('error');
+            }
+        });
+
+        // Manejo del envío del formulario
+        document.getElementById('eventForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            // Validar formulario
+            if (!validarFormulario()) {
+                alert('Por favor completa todos los campos obligatorios correctamente');
+                return;
+            }
+
+            const btn = document.getElementById('submitBtn');
+            const originalText = btn.innerHTML;
+            
+            // 1. Estado de carga
+            btn.classList.add('loading', 'disabled');
+            btn.innerHTML = ''; // El spinner se muestra vía CSS ::after
+
+            try {
+                // 2. Recopilar datos
+                const formData = {
+                    tipo_evento: document.getElementById('tipo_evento').value,
+                    fecha_evento: document.getElementById('fecha_evento').value,
+                    ubicacion_evento: document.getElementById('ubicacion_evento').value,
+                    duracion_estimada: document.getElementById('duracion_estimada').value,
+                    tiene_internet_venue: document.querySelector('input[name="internet"]:checked')?.value || "No especificado",
+                    paquete_interes: document.getElementById('paquete_interes').value,
+                    nombre_cliente: document.getElementById('nombre_cliente').value,
+                    email_cliente: document.getElementById('email_cliente').value,
+                    telefono_cliente: document.getElementById('telefono_cliente').value,
+                    comentarios_adicionales: document.getElementById('comentarios_adicionales').value,
+                    timestamp: new Date().toISOString()
+                };
+
+                // Recopilar Add-ons (checkboxes)
+                const addOns = [];
+                document.querySelectorAll('input[name="add_ons"]:checked').forEach(cb => {
+                    addOns.push(cb.value);
+                });
+                formData.add_ons_solicitados = addOns;
+
+                // Recopilar campos dinámicos específicos
+                const dynamicInputs = document.querySelectorAll('#dynamicFields input, #dynamicFields select');
+                dynamicInputs.forEach(input => {
+                    if (input.type === 'checkbox') {
+                        if (!formData[input.name]) {
+                            formData[input.name] = [];
+                        }
+                        if (input.checked) {
+                            formData[input.name].push(input.value);
+                        }
+                    } else if (input.type !== 'radio') {
+                        formData[input.id] = input.value;
+                    }
+                });
+
+                console.log("Enviando datos a N8N:", formData);
+
+                // 3. Enviar a N8N Webhook
+                const webhookUrl = 'https://erjgomezf.app.n8n.cloud/webhook-test/streaming-service';
+                
+                const response = await fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (response.ok) {
+                    // 4. Éxito
+                    btn.classList.remove('loading', 'disabled');
+                    btn.innerHTML = originalText;
+                    mostrarAnimacionExito();
+                    
+                    // Resetear formulario
+                    setTimeout(() => {
+                        document.getElementById("eventForm").reset();
+                        showStep(0);
+                        
+                        const tipoEvento = document.getElementById('tipo_evento').value;
+                        if(typeof renderizarCamposDinamicos === 'function') {
+                            renderizarCamposDinamicos(tipoEvento);
+                        }
+                        if(typeof updateBackground === 'function') {
+                            updateBackground(tipoEvento);
+                        }
+                    }, 3000);
+                } else {
+                    throw new Error('Error en la respuesta del servidor');
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                btn.classList.remove('loading', 'disabled');
+                btn.innerHTML = originalText;
+                alert('Hubo un error al enviar la solicitud. Por favor, inténtalo de nuevo.');
+            }
+        });
+        
+        function validarFormulario() {
+            let valido = true;
+            const form = document.getElementById('eventForm');
+            const inputs = form.querySelectorAll('input[required], select[required], textarea[required]');
+
+            inputs.forEach(input => {
+                const formGroup = input.closest('.form-group');
+                
+                if (!input.value.trim()) {
+                    formGroup.classList.add('error');
+                    valido = false;
+                } else {
+                    formGroup.classList.remove('error');
+                }
+            });
+
+            // Validar email
+            const email = document.getElementById('email_cliente');
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email.value)) {
+                email.closest('.form-group').classList.add('error');
+                valido = false;
+            }
+
+            // Validar teléfono (mínimo 10 dígitos)
+            const telefono = document.getElementById('telefono_cliente');
+            const telefonoLimpio = telefono.value.replace(/\D/g, '');
+            if (telefonoLimpio.length < 10) {
+                telefono.closest('.form-group').classList.add('error');
+                valido = false;
+            }
+
+            return valido;
+        }
+
+        function recopilarDatos() {
+            const formData = {
+                // Campos universales
+                tipo_evento: document.getElementById('tipo_evento').value,
+                fecha_evento: document.getElementById('fecha_evento').value,
+                ubicacion_evento: document.getElementById('ubicacion_evento').value,
+                duracion_estimada: document.getElementById('duracion_estimada').value,
+                tiene_internet_venue: document.getElementById('tiene_internet_venue').value,
+                paquete_interes: document.getElementById('paquete_interes').value,
+                nombre_cliente: document.getElementById('nombre_cliente').value,
+                email_cliente: document.getElementById('email_cliente').value,
+                telefono_cliente: document.getElementById('telefono_cliente').value,
+                comentarios_adicionales: document.getElementById('comentarios_adicionales').value,
+                
+                // Add-ons
+                add_ons_solicitados: []
+            };
+
+            // Recopilar add-ons seleccionados
+            document.querySelectorAll('input[name="add_ons"]:checked').forEach(checkbox => {
+                formData.add_ons_solicitados.push(checkbox.value);
+            });
+
+            // Recopilar campos dinámicos
+            const dynamicFields = document.getElementById('dynamicFields');
+            const inputs = dynamicFields.querySelectorAll('input, select');
+            
+            inputs.forEach(input => {
+                if (input.type === 'checkbox') {
+                    if (!formData[input.name]) {
+                        formData[input.name] = [];
+                    }
+                    if (input.checked) {
+                        formData[input.name].push(input.value);
+                    }
+                } else {
+                    formData[input.name] = input.value;
+                }
+            });
+
+            return formData;
+        }
+
+        // ========================================
+        // ANIMACIÓN DE ÉXITO
+        // ========================================
+
+        // ========================================
+        // WIZARD / STEPPER LOGIC
+        // ========================================
+
+        let currentStep = 0;
+        showStep(currentStep);
+
+        function showStep(n) {
+            // Mostrar el paso actual
+            const steps = document.getElementsByClassName("form-step");
+            steps[n].classList.add("active");
+            
+            // Ocultar otros pasos
+            for (let i = 0; i < steps.length; i++) {
+                if (i !== n) {
+                    steps[i].classList.remove("active");
+                }
+            }
+
+            // Actualizar botones
+            if (n == 0) {
+                document.getElementById("prevBtn").style.display = "none";
+            } else {
+                document.getElementById("prevBtn").style.display = "inline";
+            }
+
+            if (n == (steps.length - 1)) {
+                document.getElementById("nextBtn").style.display = "none";
+                document.getElementById("submitBtn").style.display = "inline";
+            } else {
+                document.getElementById("nextBtn").style.display = "inline";
+                document.getElementById("nextBtn").innerHTML = "Siguiente";
+                document.getElementById("submitBtn").style.display = "none";
+            }
+
+            // Actualizar indicador de pasos
+            updateStepIndicator(n);
+        }
+
+        function nextPrev(n) {
+            const steps = document.getElementsByClassName("form-step");
+            
+            // Si vamos adelante, validar el paso actual
+            if (n == 1 && !validateStep(currentStep)) return false;
+
+            // Ocultar paso actual
+            steps[currentStep].classList.remove("active");
+            
+            // Incrementar/Decrementar paso
+            currentStep = currentStep + n;
+
+            // Si llegamos al final (aunque el submit maneja esto, es bueno tenerlo)
+            if (currentStep >= steps.length) {
+                return false;
+            }
+
+            showStep(currentStep);
+        }
+
+        function validateStep(n) {
+            const steps = document.getElementsByClassName("form-step");
+            const inputs = steps[n].querySelectorAll("input, select, textarea");
+            let valid = true;
+
+            for (let i = 0; i < inputs.length; i++) {
+                // Si el campo es requerido y está vacío
+                if (inputs[i].hasAttribute("required") && inputs[i].value.trim() === "") {
+                    inputs[i].className += " invalid"; // Agregar clase para estilo si se desea
+                    const formGroup = inputs[i].closest('.form-group');
+                    formGroup.classList.add('error');
+                    valid = false;
+                }
+                
+                // Validaciones específicas
+                if (inputs[i].id === 'nombre_cliente' && inputs[i].value.trim().length < 3) {
+                    valid = false;
+                    const formGroup = inputs[i].closest('.form-group');
+                    formGroup.classList.add('error');
+                }
+                
+                if (inputs[i].id === 'email_cliente') {
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!emailRegex.test(inputs[i].value.trim())) {
+                        valid = false;
+                        const formGroup = inputs[i].closest('.form-group');
+                        formGroup.classList.add('error');
+                    }
+                }
+                
+                if (inputs[i].id === 'telefono_cliente') {
+                    const telefonoLimpio = inputs[i].value.replace(/\D/g, '');
+                    if (telefonoLimpio.length < 10) {
+                        valid = false;
+                        const formGroup = inputs[i].closest('.form-group');
+                        formGroup.classList.add('error');
+                    }
+                }
+            }
+
+            if (!valid) {
+                // Scroll al primer error
+                const firstError = steps[n].querySelector('.form-group.error');
+                if (firstError) {
+                    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+
+            return valid;
+        }
+
+        function updateStepIndicator(n) {
+            const steps = document.getElementsByClassName("step");
+            for (let i = 0; i < steps.length; i++) {
+                steps[i].className = steps[i].className.replace(" active", "");
+                if (i < n) {
+                    steps[i].className += " completed";
+                } else {
+                    steps[i].className = steps[i].className.replace(" completed", "");
+                }
+            }
+            steps[n].className += " active";
+        }
+        // ========================================
+        // FONDOS Y SLOGANS DINÁMICOS
+        // ========================================
+
+        const eventosInfo = {
+            "Eventos sociales": {
+                imagen: "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&q=80",
+                slogan: "Celebra la vida <br><span>sin límites</span>",
+                subSlogan: "Bodas, cumpleaños y reuniones familiares. Llevamos la emoción de tu celebración a quienes no pudieron asistir."
+            },
+            "Conferencias y eventos corporativos": {
+                imagen: "https://images.unsplash.com/photo-1544531586-fde5298cdd40?auto=format&fit=crop&q=80",
+                slogan: "Conecta con tu <br><span>audiencia global</span>",
+                subSlogan: "Streaming profesional para conferencias, lanzamientos y seminarios. Calidad broadcast para tu marca."
+            },
+            "E-Sport y Gaming": {
+                imagen: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80",
+                slogan: "Sube de nivel <br><span>tu transmisión</span>",
+                subSlogan: "Captura cada jugada con la máxima intensidad. Producción especializada para torneos y eventos gaming."
+            },
+            "Conciertos y Eventos Artísticos": {
+                imagen: "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&q=80",
+                slogan: "El escenario <br><span>en todas partes</span>",
+                subSlogan: "Música y arte en alta definición. Haz que tus fans sientan la energía como si estuvieran en primera fila."
+            },
+            "Eventos Religiosos": {
+                imagen: "https://images.unsplash.com/photo-1438232992991-995b7058bbb3?auto=format&fit=crop&q=80",
+                slogan: "Comparte tu <br><span>mensaje de fe</span>",
+                subSlogan: "Lleva tus servicios y ceremonias a toda tu comunidad, sin importar dónde se encuentren."
+            },
+            "Eventos Deportivos": {
+                imagen: "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&q=80",
+                slogan: "Cada gol, <br><span>en tiempo real</span>",
+                subSlogan: "Cobertura dinámica para deportes. Repeticiones, marcadores y la mejor acción en vivo."
+            },
+            "default": {
+                imagen: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&q=80",
+                slogan: "Conserva tus <br><span>mejores momentos</span>",
+                subSlogan: "La distancia es solo física. Ofrecemos servicios de streaming profesional multicámara para que nadie se pierda tu celebración."
+            }
+        };
+
+        // Función para actualizar el fondo y textos
+        function updateBackground(tipoEvento) {
+            const info = eventosInfo[tipoEvento] || eventosInfo["default"];
+            const body = document.body;
+            const slogan = document.getElementById('dynamicSlogan');
+            const subSlogan = document.getElementById('dynamicSubSlogan');
+
+            // Efecto de transición simple cambiando la URL
+            // La transición CSS en el body se encargará del suavizado
+            body.style.backgroundImage = `url('${info.imagen}')`;
+            
+            // Animación de texto
+            slogan.style.opacity = '0';
+            subSlogan.style.opacity = '0';
+            
+            setTimeout(() => {
+                slogan.innerHTML = info.slogan;
+                subSlogan.textContent = info.subSlogan;
+                slogan.style.opacity = '1';
+                subSlogan.style.opacity = '1';
+            }, 300);
+        }
+
+        // Event listener para cambio de tipo de evento
+        document.getElementById('tipo_evento').addEventListener('change', function() {
+            renderizarCamposDinamicos(this.value);
+            updateBackground(this.value);
+        });
+
+        // Inicializar transiciones de texto
+        document.getElementById('dynamicSlogan').style.transition = 'opacity 0.3s ease';
+        document.getElementById('dynamicSubSlogan').style.transition = 'opacity 0.3s ease';
+
+    </script>
+</body>
+</html>
