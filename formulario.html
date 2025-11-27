@@ -510,43 +510,102 @@
             line-height: 1.6;
         }
 
-        /* Estilos para tooltips de paquetes */
+        /* ========================================
+           SISTEMA DE TOOLTIPS INTELIGENTE
+           ======================================== */
+        
+        /* Contenedor del select con tooltip */
         .package-option {
             position: relative;
-            cursor: help;
+            display: block;
+            width: 100%;
+        }
+        
+        .package-option select {
+            width: 100%;
+            cursor: pointer;
         }
 
+        /* Tooltip base - PC */
         .package-tooltip {
             position: absolute;
-            left: 100%;
-            top: 0;
-            margin-left: 15px;
-            width: 300px;
+            left: 50%;
+            width: 350px;
             background: rgba(0, 0, 0, 0.95);
             backdrop-filter: blur(10px);
             border: 2px solid #D4AF37;
             border-radius: 12px;
-            padding: 15px;
+            padding: 20px;
             opacity: 0;
             visibility: hidden;
-            transform: translateX(-10px);
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             z-index: 1000;
             pointer-events: none;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
         }
 
-        .package-option:hover .package-tooltip {
+        /* Posicionamiento: arriba del select */
+        .package-tooltip.position-top {
+            bottom: 100%;
+            margin-bottom: 15px;
+            transform: translate(-50%, 10px);
+        }
+
+        .package-tooltip.position-top.show {
             opacity: 1;
             visibility: visible;
-            transform: translateX(0);
+            transform: translate(-50%, 0);
         }
 
+        /* Posicionamiento: abajo del select */
+        .package-tooltip.position-bottom {
+            top: 100%;
+            margin-top: 15px;
+            transform: translate(-50%, -10px);
+        }
+
+        .package-tooltip.position-bottom.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translate(-50%, 0);
+        }
+
+        /* Flecha del tooltip - arriba (tooltip debajo del select) */
+        .package-tooltip.position-bottom::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: -10px;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-bottom: 10px solid #D4AF37;
+        }
+
+        /* Flecha del tooltip - abajo (tooltip arriba del select) */
+        .package-tooltip.position-top::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            bottom: -10px;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 10px solid #D4AF37;
+        }
+
+        /* Contenido del tooltip */
         .package-tooltip h4 {
             color: #D4AF37;
             font-size: 1.1rem;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             border-bottom: 1px solid rgba(212, 175, 55, 0.3);
-            padding-bottom: 8px;
+            padding-bottom: 10px;
+            font-weight: 600;
         }
 
         .package-tooltip ul {
@@ -558,9 +617,10 @@
         .package-tooltip li {
             color: #ddd;
             font-size: 0.9rem;
-            padding: 5px 0;
-            padding-left: 20px;
+            padding: 6px 0;
+            padding-left: 25px;
             position: relative;
+            line-height: 1.4;
         }
 
         .package-tooltip li:before {
@@ -569,8 +629,12 @@
             left: 0;
             color: #51cf66;
             font-weight: bold;
+            font-size: 1rem;
         }
 
+        /* ========================================
+           DRAWER MÓVIL (BOTTOM SHEET)
+           ======================================== */
         @media (max-width: 768px) {
             .container {
                 padding: 20px;
@@ -580,18 +644,117 @@
                 font-size: 2rem;
             }
 
-            .package-tooltip {
+            /* Backdrop oscuro */
+            .tooltip-backdrop {
                 position: fixed;
-                left: 50%;
-                top: 50%;
-                transform: translate(-50%, -50%);
-                margin-left: 0;
-                width: 90%;
-                max-width: 300px;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.7);
+                backdrop-filter: blur(4px);
+                opacity: 0;
+                visibility: hidden;
+                transition: all 0.3s ease;
+                z-index: 999;
             }
 
-            .package-option:hover .package-tooltip {
-                transform: translate(-50%, -50%);
+            .tooltip-backdrop.show {
+                opacity: 1;
+                visibility: visible;
+            }
+
+            /* Drawer desde abajo */
+            .package-tooltip {
+                position: fixed;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                top: auto;
+                width: 100%;
+                max-width: 100%;
+                margin: 0;
+                border-radius: 20px 20px 0 0;
+                padding: 24px;
+                transform: translateY(100%);
+                opacity: 1;
+                visibility: visible;
+                pointer-events: auto;
+                max-height: 70vh;
+                overflow-y: auto;
+                z-index: 1000;
+            }
+
+            .package-tooltip.show {
+                transform: translateY(0);
+            }
+
+            /* Eliminar flechas en móvil */
+            .package-tooltip::before {
+                display: none;
+            }
+
+            /* Handle del drawer (línea superior) */
+            .package-tooltip::after {
+                content: '';
+                position: absolute;
+                top: 12px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 40px;
+                height: 4px;
+                background: rgba(212, 175, 55, 0.5);
+                border-radius: 2px;
+            }
+
+            /* Ajustar padding superior para el handle */
+            .package-tooltip h4 {
+                margin-top: 8px;
+                font-size: 1.2rem;
+            }
+
+            /* Botón de cerrar en móvil */
+            .tooltip-close-btn {
+                display: block;
+                position: absolute;
+                top: 16px;
+                right: 16px;
+                background: rgba(212, 175, 55, 0.2);
+                border: 1px solid #D4AF37;
+                color: #D4AF37;
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                font-size: 20px;
+                line-height: 1;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                padding: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .tooltip-close-btn:hover,
+            .tooltip-close-btn:active {
+                background: rgba(212, 175, 55, 0.3);
+                transform: scale(1.1);
+            }
+
+            /* Prevenir scroll del body cuando el drawer está abierto */
+            body.tooltip-open {
+                overflow: hidden;
+            }
+        }
+
+        /* Botón de cerrar oculto en desktop */
+        @media (min-width: 769px) {
+            .tooltip-close-btn {
+                display: none;
+            }
+
+            .tooltip-backdrop {
+                display: none;
             }
         }
 
@@ -833,22 +996,30 @@
                     
                     <div class="form-group">
                         <label for="paquete_interes">Paquete de interés <span class="required">*</span></label>
-                        <select id="paquete_interes" name="paquete_interes" required>
-                            <option value="">-- Selecciona --</option>
-                            <option value="Básico" class="package-option" data-package="basico">🥉 Básico - 1 cámara HD</option>
-                            <option value="Estándar" class="package-option" data-package="estandar">🥈 Estándar - 2 cámaras HD + overlays básicos</option>
-                            <option value="Premium" class="package-option" data-package="premium">🥇 Premium - 3 cámaras HD + director técnico</option>
-                            <option value="Enterprise" class="package-option" data-package="enterprise">💎 Enterprise - 4 cámaras 4K + multi-plataforma</option>
-                            <option value="No estoy seguro">❓ No estoy seguro</option>
-                        </select>
-                        <span class="error-message">Selecciona un paquete</span>
                         
-                        <!-- Tooltip que aparecerá al hacer hover -->
-                        <div id="packageTooltip" class="package-tooltip" style="display: none;">
-                            <h4 id="tooltipTitle"></h4>
-                            <ul id="tooltipContent"></ul>
+                        <div class="package-option">
+                            <select id="paquete_interes" name="paquete_interes" required>
+                                <option value="">-- Selecciona --</option>
+                                <option value="Básico" data-package="basico">🥉 Básico - 1 cámara HD</option>
+                                <option value="Estándar" data-package="estandar">🥈 Estándar - 2 cámaras HD + overlays básicos</option>
+                                <option value="Premium" data-package="premium">🥇 Premium - 3 cámaras HD + director técnico</option>
+                                <option value="Enterprise" data-package="enterprise">💎 Enterprise - 4 cámaras 4K + multi-plataforma</option>
+                                <option value="No estoy seguro">❓ No estoy seguro</option>
+                            </select>
+                            
+                            <!-- Tooltip que aparecerá al hacer hover -->
+                            <div id="packageTooltip" class="package-tooltip" style="display: none;">
+                                <button id="tooltipCloseBtn" class="tooltip-close-btn" aria-label="Cerrar">×</button>
+                                <h4 id="tooltipTitle"></h4>
+                                <ul id="tooltipContent"></ul>
+                            </div>
                         </div>
+                        
+                        <span class="error-message">Selecciona un paquete</span>
                     </div>
+                    
+                    <!-- Backdrop para móvil -->
+                    <div id="tooltipBackdrop" class="tooltip-backdrop"></div>
 
                     <!-- Info box con detalles de paquetes -->
                     <div class="info-box" style="margin-top: 15px;">
@@ -1306,7 +1477,7 @@
         });
 
         // ========================================
-        // TOOLTIPS DE PAQUETES
+        // SISTEMA DE TOOLTIPS INTELIGENTE
         // ========================================
 
         // Información detallada de cada paquete
@@ -1353,45 +1524,142 @@
             }
         };
 
-        // Mostrar tooltip al hacer hover sobre el select
+        // Referencias a elementos del DOM
         const selectPaquete = document.getElementById('paquete_interes');
         const tooltip = document.getElementById('packageTooltip');
         const tooltipTitle = document.getElementById('tooltipTitle');
         const tooltipContent = document.getElementById('tooltipContent');
+        const tooltipBackdrop = document.getElementById('tooltipBackdrop');
+        const tooltipCloseBtn = document.getElementById('tooltipCloseBtn');
 
-        selectPaquete.addEventListener('mouseenter', function() {
-            const selectedOption = this.options[this.selectedIndex];
+        let tooltipTimeout;
+        const isMobile = () => window.innerWidth <= 768;
+
+        // Función para detectar espacio disponible y posicionar tooltip
+        function posicionarTooltipInteligente() {
+            if (isMobile()) {
+                // En móvil, siempre usar drawer (sin clases de posición)
+                tooltip.classList.remove('position-top', 'position-bottom');
+                return;
+            }
+
+            const selectRect = selectPaquete.getBoundingClientRect();
+            const tooltipHeight = 280; // Altura aproximada del tooltip
+            const margin = 15;
+
+            // Calcular espacio disponible arriba y abajo
+            const espacioArribaDisponible = selectRect.top - margin;
+            const espacioAbajoDisponible = window.innerHeight - selectRect.bottom - margin;
+
+            // Decidir posición: preferir arriba, pero si no hay espacio, abajo
+            if (espacioArribaDisponible >= tooltipHeight) {
+                // Hay espacio arriba - posición preferida
+                tooltip.classList.remove('position-bottom');
+                tooltip.classList.add('position-top');
+            } else if (espacioAbajoDisponible >= tooltipHeight) {
+                // No hay espacio arriba, pero sí abajo
+                tooltip.classList.remove('position-top');
+                tooltip.classList.add('position-bottom');
+            } else {
+                // No hay suficiente espacio en ningún lado, usar el que tenga más
+                if (espacioArribaDisponible > espacioAbajoDisponible) {
+                    tooltip.classList.remove('position-bottom');
+                    tooltip.classList.add('position-top');
+                } else {
+                    tooltip.classList.remove('position-top');
+                    tooltip.classList.add('position-bottom');
+                }
+            }
+        }
+
+        // Función para actualizar contenido del tooltip
+        function actualizarContenidoTooltip(packageType) {
+            if (!packageType || !paquetesInfo[packageType]) {
+                return false;
+            }
+
+            const info = paquetesInfo[packageType];
+            
+            // Actualizar contenido
+            tooltipTitle.textContent = info.titulo;
+            tooltipContent.innerHTML = '';
+            
+            info.items.forEach(item => {
+                const li = document.createElement('li');
+                li.textContent = item;
+                tooltipContent.appendChild(li);
+            });
+
+            return true;
+        }
+
+        // Función para mostrar tooltip
+        function mostrarTooltip() {
+            const selectedOption = selectPaquete.options[selectPaquete.selectedIndex];
             const packageType = selectedOption.getAttribute('data-package');
             
-            if (packageType && paquetesInfo[packageType]) {
-                const info = paquetesInfo[packageType];
-                
-                // Actualizar contenido del tooltip
-                tooltipTitle.textContent = info.titulo;
-                tooltipContent.innerHTML = '';
-                
-                info.items.forEach(item => {
-                    const li = document.createElement('li');
-                    li.textContent = item;
-                    tooltipContent.appendChild(li);
-                });
-                
+            if (!actualizarContenidoTooltip(packageType)) {
+                return;
+            }
+
+            if (isMobile()) {
+                // Móvil: Mostrar drawer
+                tooltipBackdrop.classList.add('show');
                 tooltip.style.display = 'block';
+                document.body.classList.add('tooltip-open');
+                
+                // Pequeño delay para la animación
                 setTimeout(() => {
-                    tooltip.style.opacity = '1';
-                    tooltip.style.visibility = 'visible';
-                    tooltip.style.transform = 'translateX(0)';
+                    tooltip.classList.add('show');
                 }, 10);
+            } else {
+                // PC: Mostrar tooltip con posicionamiento inteligente
+                posicionarTooltipInteligente();
+                tooltip.style.display = 'block';
+                
+                setTimeout(() => {
+                    tooltip.classList.add('show');
+                }, 10);
+            }
+        }
+
+        // Función para ocultar tooltip
+        function ocultarTooltip() {
+            tooltip.classList.remove('show');
+            tooltipBackdrop.classList.remove('show');
+            document.body.classList.remove('tooltip-open');
+            
+            setTimeout(() => {
+                tooltip.style.display = 'none';
+            }, 300); // Esperar a que termine la animación
+        }
+
+        // Event Listeners
+
+        // Hover sobre el select (PC)
+        selectPaquete.addEventListener('mouseenter', function() {
+            if (!isMobile()) {
+                clearTimeout(tooltipTimeout);
+                tooltipTimeout = setTimeout(mostrarTooltip, 200);
             }
         });
 
         selectPaquete.addEventListener('mouseleave', function() {
-            tooltip.style.opacity = '0';
-            tooltip.style.visibility = 'hidden';
-            tooltip.style.transform = 'translateX(-10px)';
-            setTimeout(() => {
-                tooltip.style.display = 'none';
-            }, 300);
+            if (!isMobile()) {
+                clearTimeout(tooltipTimeout);
+                ocultarTooltip();
+            }
+        });
+
+        // Focus en el select (Móvil)
+        selectPaquete.addEventListener('focus', function() {
+            if (isMobile()) {
+                const selectedOption = this.options[this.selectedIndex];
+                const packageType = selectedOption.getAttribute('data-package');
+                if (packageType) {
+                    setTimeout(mostrarTooltip, 300);
+                }
+            }
         });
 
         // Actualizar tooltip al cambiar de opción
@@ -1400,15 +1668,54 @@
             const packageType = selectedOption.getAttribute('data-package');
             
             if (packageType && paquetesInfo[packageType]) {
-                const info = paquetesInfo[packageType];
-                tooltipTitle.textContent = info.titulo;
-                tooltipContent.innerHTML = '';
+                actualizarContenidoTooltip(packageType);
                 
-                info.items.forEach(item => {
-                    const li = document.createElement('li');
-                    li.textContent = item;
-                    tooltipContent.appendChild(li);
-                });
+                // En móvil, mostrar el drawer automáticamente al seleccionar
+                if (isMobile()) {
+                    mostrarTooltip();
+                }
+            }
+        });
+
+        // Cerrar tooltip con el botón X (móvil)
+        tooltipCloseBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            ocultarTooltip();
+        });
+
+        // Cerrar tooltip al hacer click en el backdrop (móvil)
+        tooltipBackdrop.addEventListener('click', function() {
+            ocultarTooltip();
+        });
+
+        // Prevenir que el click dentro del tooltip lo cierre
+        tooltip.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+
+        // Reposicionar tooltip al hacer resize
+        let resizeTimeout;
+        window.addEventListener('resize', function() {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                // Si el tooltip está visible y estamos en PC, reposicionar
+                if (!isMobile() && tooltip.classList.contains('show')) {
+                    posicionarTooltipInteligente();
+                }
+                // Si cambiamos de PC a móvil o viceversa mientras está abierto, cerrar
+                const wasMobile = tooltip.style.position === 'fixed';
+                const isNowMobile = isMobile();
+                if (wasMobile !== isNowMobile && tooltip.classList.contains('show')) {
+                    ocultarTooltip();
+                }
+            }, 100);
+        });
+
+        // Cerrar con tecla ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && tooltip.classList.contains('show')) {
+                ocultarTooltip();
             }
         });
 
