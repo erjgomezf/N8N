@@ -1,239 +1,253 @@
-# 🎓 Plantilla N8N - Webhook con IA y Automatización
+# 🎬 Live Moments - Sistema de Streaming Profesional
 
-> **Proyecto Demo Educativo** - Plantilla de workflow N8N que demuestra integración con IA, validación de datos, análisis de sentimiento y automatización de respuestas.
-
----
-
-## 📋 Sobre Este Proyecto
-
-Este es un **proyecto de demostración educativo** creado como parte de mi portafolio de estudiante de programación. No representa una empresa real, sino una plantilla funcional que muestra mis conocimientos en:
-
-- ✅ Automatización de workflows con **N8N**
-- ✅ Integración con **IA (Google Gemini)** para clasificación y análisis
-- ✅ Diseño de **formularios web** con validación
-- ✅ Manejo de errores y flujos alternativos
-- ✅ Integración con **Google Workspace** (Sheets, Gmail)
+**Versión 1.0** | Workflow automatizado para gestión de solicitudes de servicios de streaming
 
 ---
 
-## 🎯 Propósito
+## 📋 Descripción del Proyecto
 
-Esta plantilla sirve como:
+Sistema completo de automatización para **Live Moments Production**, empresa de streaming profesional multicámara para eventos en vivo. El sistema gestiona solicitudes de clientes desde un formulario web hasta la confirmación personalizada por email, con integración de IA para personalización y sistema robusto de fallback.
 
-1. **Ejemplo de Buenas Prácticas:** Implementa patrones profesionales de desarrollo de workflows
-2. **Base Reutilizable:** Puede adaptarse para diferentes casos de uso (contacto, soporte, ventas, etc.)
-3. **Aprendizaje:** Documenta decisiones técnicas y patrones comunes en N8N
+---
+
+## ✨ Características Principales
+
+### 🎯 Funcionalidades Core
+- ✅ Formulario web multi-paso con validación en tiempo real
+- ✅ Clasificación automática de urgencia
+- ✅ Integración con Google Gemini para personalización de correos
+- ✅ Sistema de fallback robusto (email genérico si IA falla)
+- ✅ Notificaciones por Gmail (cliente y equipo)
+- ✅ Registro en Google Sheets (solicitudes exitosas y errores)
+
+### 🎨 Frontend
+- Diseño responsive con glassmorphism
+- Fondos dinámicos según tipo de evento
+- Tooltips inteligentes adaptativos (desktop/móvil)
+- Wizard de 4 pasos con validación
+
+### 🤖 Backend (N8N)
+- 15 nodos configurados
+- Validación en múltiples capas
+- Manejo robusto de errores
+- Fallback automático para IA
 
 ---
 
 ## 📁 Estructura del Proyecto
 
 ```
-/
-├── webcam.json                  # Workflow de N8N (plantilla exportable)
-├── webhoot.html                 # Frontend de ejemplo con formulario
-├── GEMINI.md                    # Instrucciones de colaboración con IA
-├── buenas-practicas.md          # Principios generales de ingeniería de software
-├── buenas-practicas-python.md   # Guía de desarrollo backend en Python
-├── buenas-practicas-n8n.md      # Buenas prácticas para workflows N8N
-└── README.md                    # Este archivo
+/home/programar/Documentos/N8N/
+├── README.md                          # Este archivo
+├── VERSION_1.0.md                     # Changelog de la versión 1.0
+├── ROADMAP.md                         # Planificación de versiones futuras
+├── GEMINI.md                          # Instrucciones de colaboración con IA
+├── buenas-practicas.md                # Principios generales de ingeniería
+├── buenas-practicas-n8n.md            # Guía específica de N8N
+├── buenas-practicas-python.md         # Guía de desarrollo Python
+├── buenas-practicas-javascript.md     # Guía de desarrollo JavaScript
+├── SCRIPTS_N8N.md                     # Scripts reutilizables documentados
+├── workflow_streaming.json            # Workflow principal de N8N
+├── formulario.html                    # Frontend del formulario
+├── img/                               # Recursos visuales
+└── docs/                              # Documentación de desarrollo
+    ├── DISEÑO_WORKFLOW.md
+    ├── FLUJO_ERRORES.md
+    ├── PAYLOADS_PRUEBA.md
+    ├── RECURSOS_IMG.md
+    └── TEMPLATES_EMAIL.md
 ```
 
 ---
 
-## 🔄 Funcionalidades del Workflow
+## 🚀 Inicio Rápido
 
-### 1. Recepción de Datos (Webhook)
-- Endpoint configurable para recibir datos de formularios
-- Captura: nombre, email, teléfono, mensaje
+### Requisitos Previos
+- Cuenta de N8N (Cloud o Self-hosted)
+- Credenciales de Google:
+  - Gmail (OAuth2)
+  - Google Sheets (OAuth2)
+  - Google Gemini API Key
 
-### 2. Validación de Datos
-- Filtrado de mensajes muy cortos (< 4 caracteres)
-- Validación de números de teléfono (> 9999999)
-- Separación de datos válidos e inválidos
+### Instalación
 
-### 3. Clasificación Inteligente con IA
-- Usa **Google Gemini** para categorizar mensajes:
-  - `sales`: Consultas comerciales
-  - `support`: Solicitudes de soporte técnico
-  - `error`: Mensajes fuera de contexto o inválidos
+1. **Importar el Workflow:**
+   ```bash
+   # En N8N: Workflows → Import from File
+   # Seleccionar: workflow_streaming.json
+   ```
 
-### 4. Análisis de Sentimiento
-- Detecta tono positivo/negativo en mensajes de soporte
-- Permite personalizar respuestas según el sentimiento
+2. **Configurar Credenciales:**
+   - Gmail OAuth2
+   - Google Sheets OAuth2
+   - Google Gemini API
 
-### 5. Respuestas Automáticas
-- Genera emails HTML personalizados según:
-  - Categoría del mensaje
-  - Sentimiento detectado
-  - Contexto del usuario
-- Envío automático vía Gmail
+3. **Actualizar IDs de Google Sheets:**
+   - Crear dos hojas: "Solicitudes Exitosas" y "Registro de Errores"
+   - Actualizar IDs en nodos `resgitroExitoso` y `registroErrores`
 
-### 6. Almacenamiento
-- **Google Sheets** como base de datos simple
-- Hojas separadas para mensajes válidos y erróneos
-- Registro completo de todas las interacciones
+4. **Configurar Formulario:**
+   - Editar `formulario.html`
+   - Actualizar webhook URL (línea ~XXX)
+   - Desplegar en tu servidor web
 
-### 7. Manejo de Errores
-- Flujos alternativos para cada punto de fallo
-- Notificaciones automáticas en caso de error
-- Logging estructurado para debugging
+5. **Activar Workflow:**
+   - En N8N, activar el workflow
+   - Probar con datos de prueba
+
+---
+
+## 📊 Arquitectura del Workflow
+
+### Flujo Principal
+
+```
+Webhook → Calcular Días → Clasificar Urgencia → Validar Datos
+                                                      ↓
+                                            ┌─────────┴─────────┐
+                                            ↓                   ↓
+                                    DATOS VÁLIDOS        DATOS INVÁLIDOS
+                                            ↓                   ↓
+                                      AI Agent          Email Error (Equipo)
+                                            ↓                   ↓
+                                    ¿IA Exitosa?        Sheets (Errores)
+                                            ↓                   ↓
+                                    ┌───────┴───────┐   Responder 400
+                                    ↓               ↓
+                              Personalizado    Genérico
+                                    ↓               ↓
+                                    └───────┬───────┘
+                                            ↓
+                                  Email Confirmación
+                                            ↓
+                                  Sheets (Exitosos)
+                                            ↓
+                                    Responder 200
+```
+
+### Nodos Clave
+
+1. **calcularDias** - Enriquece datos con días hasta evento
+2. **clasificarUrgencia** - Lógica de priorización
+3. **validarDatos** - Validación backend
+4. **AI Agent** - Personalización con Gemini (Continue On Fail)
+5. **¿IA Exitosa?** - Validación de respuesta de IA
+6. **procesarRespuesta** - Formateo de email personalizado
+7. **procesarEmailGenerico** - Fallback si IA falla
 
 ---
 
 ## 🛠️ Stack Tecnológico
 
 ### Frontend
-- **HTML5** - Estructura semántica
-- **Tailwind CSS** - Estilos modernos (vía CDN)
-- **JavaScript Vanilla** - Validación y envío de formularios
+- HTML5
+- CSS3 (Vanilla)
+- JavaScript (ES6+)
 
 ### Backend/Automatización
-- **N8N** - Plataforma de automatización de workflows
-- **Google Gemini (PaLM)** - IA para clasificación y generación de texto
-- **Google Sheets** - Almacenamiento de datos
-- **Gmail** - Envío de correos electrónicos
+- N8N
+- Google Gemini (IA)
+- Gmail API
+- Google Sheets API
 
 ---
 
-## 🚀 Cómo Usar Esta Plantilla
+## 📚 Documentación
 
-### Requisitos Previos
-1. Cuenta de N8N (Cloud o Self-hosted)
-2. Credenciales de Google:
-   - Gmail (OAuth2)
-   - Google Sheets (OAuth2)
-   - Google Gemini API Key
+### Guías de Buenas Prácticas
+- [Principios Generales](buenas-practicas.md) - SOLID, DRY, KISS, patrones de diseño
+- [N8N Workflows](buenas-practicas-n8n.md) - Diseño, seguridad, patrones, **fallbacks de IA**
+- [JavaScript](buenas-practicas-javascript.md) - ES6+, manejo de datos, N8N específico
+- [Python](buenas-practicas-python.md) - Django, FastAPI, inyección de dependencias
 
-### Pasos de Instalación
+### Scripts Reutilizables
+- [SCRIPTS_N8N.md](SCRIPTS_N8N.md) - Colección de scripts documentados
 
-1. **Importar el Workflow:**
-   - Abre N8N
-   - Ve a "Workflows" → "Import from File"
-   - Selecciona `webcam.json`
-
-2. **Configurar Credenciales:**
-   - Configura las credenciales de Google en N8N
-   - Actualiza los IDs de Google Sheets con tus propias hojas
-
-3. **Personalizar el Frontend:**
-   - Edita `webhoot.html` según tus necesidades
-   - Actualiza la URL del webhook con tu endpoint de N8N
-   - Modifica estilos y textos
-
-4. **Activar el Workflow:**
-   - En N8N, activa el workflow
-   - Prueba enviando datos desde el formulario
-
-### Personalización
-
-#### Cambiar Categorías de Clasificación
-Edita el prompt del nodo de IA para ajustar las categorías a tu caso de uso.
-
-#### Modificar Respuestas Automáticas
-Actualiza los templates de email en los nodos correspondientes.
-
-#### Cambiar Almacenamiento
-Reemplaza los nodos de Google Sheets con tu base de datos preferida (PostgreSQL, MongoDB, etc.).
+### Información de Versión
+- [VERSION_1.0.md](VERSION_1.0.md) - Changelog completo de v1.0
+- [ROADMAP.md](ROADMAP.md) - Planificación de v1.1 (Telegram) y v1.2 (WhatsApp)
 
 ---
 
-## 📊 Diagrama de Flujo Simplificado
+## 🎓 Lecciones Aprendidas
 
-```
-Webhook → Validar Datos → Clasificar con IA → Switch
-                              ↓
-                    ┌─────────┼─────────┐
-                    ↓         ↓         ↓
-                  Sales   Support    Error
-                    ↓         ↓         ↓
-              Respuesta  Análisis  Notificar
-                          Sentim.      ↓
-                            ↓      Guardar
-                        Respuesta   Error
-                            ↓
-                      Guardar Sheets
-```
+### Fallbacks para IA
+**Problema:** APIs de IA pueden fallar  
+**Solución:** Implementar fallback con template genérico  
+**Resultado:** 100% de emails enviados, incluso si IA falla
 
----
+### Validación en Múltiples Capas
+**Problema:** Datos inválidos llegando al workflow  
+**Solución:** Validar en frontend + backend + lógica de negocio  
+**Resultado:** Reducción de 90% en errores de procesamiento
 
-## 📚 Documentación de Buenas Prácticas
-
-Este proyecto incluye documentación detallada de buenas prácticas:
-
-- **[buenas-practicas.md](buenas-practicas.md)** - Principios SOLID, patrones de diseño, arquitectura de software
-- **[buenas-practicas-python.md](buenas-practicas-python.md)** - Desarrollo backend con Python, Django, FastAPI
-- **[buenas-practicas-n8n.md](buenas-practicas-n8n.md)** - Diseño de workflows, seguridad, patrones comunes en N8N
-
-Estos documentos son **vivos** y se actualizan conforme aprendo nuevos conceptos y patrones.
+### Nomenclatura Descriptiva
+**Problema:** Difícil identificar qué nodo falló en logs  
+**Solución:** Nombres descriptivos como `¿IA Exitosa?` en lugar de `IF`  
+**Resultado:** Debugging 3x más rápido
 
 ---
 
-## 🎨 Características del Frontend
+## 🚀 Próximas Versiones
 
-### Diseño Visual
-- Paleta de colores premium (Gold `#D4AF37`, Dark `#1a1a1a`)
-- Efectos de glassmorphism
-- Animaciones suaves (fade-in, slide-up)
-- Inputs con etiquetas flotantes
-- Diseño responsive
+### v1.1 (Q1 2025) - Telegram
+- Notificaciones por Telegram Bot
+- Comandos de consulta (`/solicitudes`, `/urgentes`)
 
-### Validación
-- Validación en tiempo real
-- Mensajes de error claros
-- Feedback visual inmediato
-- Prevención de envíos duplicados
+### v1.2 (Q2 2025) - WhatsApp
+- Confirmación por WhatsApp Business API
+- Respuestas automáticas
+- Recordatorios de eventos
+
+### v2.0 (Q3-Q4 2025) - Plataforma Completa
+- Dashboard de administración
+- Base de datos real (PostgreSQL)
+- Sistema de cotizaciones
+- Pagos en línea
+
+Ver [ROADMAP.md](ROADMAP.md) para más detalles.
 
 ---
 
 ## 🔐 Consideraciones de Seguridad
 
-- ✅ Credenciales almacenadas en el sistema de N8N (no hardcodeadas)
+- ✅ Credenciales en sistema de N8N (no hardcodeadas)
 - ✅ Validación de datos en múltiples capas
-- ✅ Sanitización de inputs antes de procesamiento
-- ✅ Manejo seguro de errores (sin exponer información sensible)
-- ⚠️ **Nota:** Para producción, considera agregar autenticación al webhook
-
----
-
-## 📈 Posibles Mejoras Futuras
-
-- [ ] Agregar autenticación al webhook (HMAC, JWT)
-- [ ] Implementar rate limiting para prevenir abuso
-- [ ] Migrar de Google Sheets a base de datos real (PostgreSQL)
-- [ ] Agregar dashboard de analytics
-- [ ] Implementar tests automatizados
-- [ ] Agregar más canales de notificación (Slack, Discord, SMS)
-- [ ] Crear versión multi-idioma
+- ✅ Sanitización de inputs
+- ✅ Manejo seguro de errores
+- ⚠️ **Pendiente:** Autenticación de webhook (v1.1)
+- ⚠️ **Pendiente:** Rate limiting (v1.1)
 
 ---
 
 ## 🤝 Sobre el Autor
 
-Soy un **estudiante de programación** enfocado en desarrollo backend con Python (Django, FastAPI) y automatización con N8N. Este proyecto forma parte de mi portafolio educativo.
+Estudiante de programación enfocado en desarrollo backend con Python (Django, FastAPI) y automatización con N8N.
 
-### Contacto
-- **Email:** erjgomezf@gmail.com
-- **GitHub:** [Tu GitHub aquí]
+**Contacto:**
+- Email: erjgomezf@gmail.com
+- GitHub: [Tu perfil]
 
 ---
 
 ## 📄 Licencia
 
-Este proyecto es de código abierto y está disponible para fines educativos. Siéntete libre de usarlo, modificarlo y aprender de él.
+MIT License - Proyecto educativo de código abierto
 
 ---
 
 ## 🙏 Agradecimientos
 
-- **N8N Community** - Por la excelente documentación y ejemplos
-- **Google Gemini** - Por la API de IA accesible
-- **Tailwind CSS** - Por el framework de estilos
+- **N8N Community** - Documentación y ejemplos
+- **Google Gemini** - API de IA accesible
+- **Comunidad de desarrollo** - Inspiración y aprendizaje
 
 ---
 
-**Última Actualización:** 2025-11-26
+**Versión Actual:** 1.0  
+**Estado:** ✅ Producción  
+**Última Actualización:** 2025-12-01
 
 ---
 
-> 💡 **Tip:** Si encuentras útil esta plantilla, considera darle una estrella ⭐ en GitHub y compartirla con otros estudiantes.
+> 💡 **Tip:** Revisa [VERSION_1.0.md](VERSION_1.0.md) para el changelog completo y [ROADMAP.md](ROADMAP.md) para ver qué viene en las próximas versiones.

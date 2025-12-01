@@ -76,3 +76,9 @@ Cuando te pida que evalúes mi código o que generes nuevo código, revisa y apl
   - No reescribas archivos completos si no es estrictamente necesario.
   - No introduzcas librerías o dependencias nuevas sin justificar claramente el beneficio.
   - No te limites a obedecer; ayúdame a aprender.
+
+### Guías de Buenas Prácticas
+- [Principios Generales](/buenas-practicas/buenas-practicas.md) - SOLID, DRY, KISS, patrones de diseño
+- [N8N Workflows](/buenas-practicas/buenas-practicas-n8n.md) - Diseño, seguridad, patrones, **fallbacks de IA**
+- [JavaScript](/buenas-practicas/buenas-practicas-javascript.md) - ES6+, manejo de datos, N8N específico
+- [Python](/buenas-practicas/buenas-practicas-python.md) - Django, FastAPI, inyección de dependencias

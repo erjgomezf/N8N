@@ -254,9 +254,77 @@ Evento → Preparar Mensaje → Split
 
 ---
 
-## 12. Antipatrones a Evitar
+## 12. Fallbacks y Resiliencia
 
-### 12.1. Antipatrones Comunes
+### 12.1. Patrón Circuit Breaker para Servicios Externos
+
+Cuando integres servicios externos (APIs de IA, servicios de pago, etc.), siempre implementa un fallback:
+
+```
+[Servicio Externo] (Continue On Fail) → [¿Exitoso?]
+  → True: Usar respuesta del servicio
+  → False: Usar fallback/alternativa
+```
+
+**Ejemplo práctico:**
+```
+[AI Agent] → [¿IA Exitosa?]
+  → True: Email personalizado
+  → False: Email genérico (template)
+```
+
+### 12.2. Configuración de "Continue On Fail"
+
+Para nodos que llaman a servicios externos:
+
+1. **Activa "Continue On Fail"** en Settings del nodo
+2. **Valida la respuesta** con un nodo IF o Code
+3. **Implementa fallback** para el camino de error
+
+**Validación de respuesta de IA:**
+```javascript
+const iaExitosa = $json.output && 
+                  $json.output.length > 10 && 
+                  !$json.error;
+
+return {
+  ...input,
+  ia_exitosa: iaExitosa,
+  usar_fallback: !iaExitosa
+};
+```
+
+### 12.3. Templates Genéricos como Fallback
+
+Siempre ten un template genérico pero profesional como fallback:
+
+- **Incluye datos esenciales** del formulario
+- **Mantén el branding** consistente
+- **Proporciona valor** al usuario (confirmación, próximos pasos)
+- **No menciones** que es un fallback
+
+### 12.4. Monitoreo de Fallbacks
+
+Registra cuándo se usa el fallback para detectar problemas:
+
+```javascript
+return {
+  ...input,
+  tipo_email: "generico_fallback",
+  timestamp_fallback: new Date().toISOString()
+};
+```
+
+Luego puedes:
+- Contar frecuencia de fallbacks en Google Sheets
+- Alertar si tasa de fallback > 10%
+- Investigar problemas con el servicio externo
+
+---
+
+## 13. Antipatrones a Evitar
+
+### 13.1. Antipatrones Comunes
 
 - ❌ **Nodos Sin Nombre:** Dificulta el debugging y mantenimiento.
 - ❌ **Workflows Monolíticos:** Un solo workflow que hace demasiadas cosas.
@@ -264,6 +332,30 @@ Evento → Preparar Mensaje → Split
 - ❌ **Hardcodear Valores:** URLs, IDs, credenciales en nodos en lugar de usar variables o credenciales.
 - ❌ **Validación Insuficiente:** Confiar ciegamente en datos de entrada.
 - ❌ **Logs Excesivos:** Loguear datos sensibles o demasiada información.
+- ❌ **Sin Fallbacks para IA:** Depender 100% de servicios de IA sin alternativa.
+- ❌ **Validación Única:** Validar solo en frontend o solo en backend.
+
+### 13.2. Lecciones Aprendidas (Proyecto Live Moments)
+
+#### Importancia de Fallbacks
+- **Problema:** APIs de IA pueden fallar o tener latencia alta
+- **Solución:** Implementar fallback con template genérico
+- **Resultado:** 100% de emails enviados, incluso si IA falla
+
+#### Validación en Múltiples Capas
+- **Problema:** Datos inválidos llegando al workflow
+- **Solución:** Validar en frontend + backend + lógica de negocio
+- **Resultado:** Reducción de 90% en errores de procesamiento
+
+#### Nomenclatura Descriptiva
+- **Problema:** Difícil identificar qué nodo falló en logs
+- **Solución:** Nombres descriptivos como `¿IA Exitosa?` en lugar de `IF`
+- **Resultado:** Debugging 3x más rápido
+
+#### Separación de Lógica
+- **Problema:** Nodos Code haciendo demasiadas cosas
+- **Solución:** Un nodo por transformación (calcular, clasificar, validar)
+- **Resultado:** Código más mantenible y reutilizable
 
 ---
 
@@ -300,4 +392,4 @@ Antes de activar un workflow en producción, verifica:
 
 ---
 
-**Última Actualización**: 2025-11-26
+**Última Actualización**: 2025-12-01

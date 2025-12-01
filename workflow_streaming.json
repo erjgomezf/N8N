@@ -12,7 +12,7 @@
       "typeVersion": 2.1,
       "position": [
         0,
-        0
+        -64
       ],
       "id": "6363fceb-bfad-4a90-98af-0d16ef19f93a",
       "name": "Webhook",
@@ -28,7 +28,7 @@
       "typeVersion": 1.4,
       "position": [
         224,
-        -96
+        -160
       ],
       "id": "085b3846-7699-4a2e-8657-fbe06d7c99f6",
       "name": "fomularioWeb",
@@ -42,7 +42,7 @@
       "typeVersion": 2,
       "position": [
         224,
-        96
+        32
       ],
       "id": "ecf2b8e4-cf75-4d80-8117-16f4e4c870b1",
       "name": "calcularDias"
@@ -55,7 +55,7 @@
       "typeVersion": 2,
       "position": [
         448,
-        96
+        32
       ],
       "id": "5c46f6a5-1d1a-4a93-aee9-104abfd9a214",
       "name": "clasificarUrgencia"
@@ -68,7 +68,7 @@
       "typeVersion": 2,
       "position": [
         672,
-        96
+        32
       ],
       "id": "3b602f40-ce86-4d68-8b85-47de823774b1",
       "name": "validarDatos"
@@ -102,7 +102,7 @@
       "typeVersion": 2.2,
       "position": [
         1120,
-        96
+        32
       ],
       "id": "bfbc7c27-a9e2-40a2-9ee1-4bfb85e5cfe8",
       "name": "validarDatos2"
@@ -116,8 +116,8 @@
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        208,
-        -176
+        176,
+        -240
       ],
       "typeVersion": 1,
       "id": "929c9392-2e51-4837-81c7-8026f14cf0ee",
@@ -131,8 +131,8 @@
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        208,
-        48
+        176,
+        -16
       ],
       "typeVersion": 1,
       "id": "253c6769-03f9-44aa-9c95-c80144234e6a",
@@ -147,8 +147,8 @@
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        1312,
-        192
+        1360,
+        144
       ],
       "typeVersion": 1,
       "id": "a73fbc40-46bd-46e5-bcb2-eb08e5d2d123",
@@ -158,13 +158,13 @@
       "parameters": {
         "content": "## Datos validos",
         "height": 400,
-        "width": 1376,
+        "width": 1872,
         "color": 4
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        1312,
-        -224
+        1296,
+        -272
       ],
       "typeVersion": 1,
       "id": "448bad4c-9046-4b4f-92d9-dc21aee5ae32",
@@ -177,8 +177,8 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
       "typeVersion": 1,
       "position": [
-        1360,
-        16
+        1344,
+        0
       ],
       "id": "b746aaf1-3616-4491-bc09-7765d75c1847",
       "name": "Google Gemini Chat Model",
@@ -194,6 +194,7 @@
         "promptType": "define",
         "text": "=Genera un correo de confirmación personalizado para este cliente:\nDATOS DEL CLIENTE:\n- Nombre: {{ $json.nombre_cliente }}\n- Email: {{ $json.email_cliente }}\n- Teléfono: {{ $json.telefono_cliente }}\nDATOS DEL EVENTO:\n- Tipo: {{ $json.tipo_evento }}\n- Fecha: {{ $json.fecha_evento }}\n- Ubicación: {{ $json.ubicacion_evento }}\n- Duración: {{ $json.duracion_estimada }}\n- Internet en venue: {{ $json.tiene_internet_venue }}\nSOLICITUD:\n- Paquete seleccionado: {{ $json.paquete_interes }}\n- Add-ons solicitados: {{ $json.add_ons_solicitados ? $json.add_ons_solicitados.join(', ') : 'Ninguno' }}\n- Días hasta el evento: {{ $json.dias_del_evento }}\nINSTRUCCIONES:\n1. Usa el tono apropiado según el tipo de evento\n2. Confirma la recepción de la solicitud mencionando tipo de evento y fecha\n3. Proporciona recomendaciones sobre:\n   a) Validación o mejora del paquete seleccionado (si aplica)\n   b) Add-ons relevantes que NO hayan sido seleccionados\n   c) Consideraciones especiales:\n      - Si el evento es en menos de 15 días: mencionar urgencia\n      - Si no hay internet: recomendar solución (Starlink)\n      - Si duración >6 horas: sugerir equipo de respaldo\n4. Indica próximos pasos:\n   - Contacto del asesor en 24-48 horas\n   - Envío de cotización personalizada\n   - Videollamada de asesoría (si evento complejo)\n5. Despedida acorde al tono\nDevuelve SOLO el JSON, sin texto adicional.",
         "hasOutputParser": true,
+        "needsFallback": true,
         "options": {
           "systemMessage": "Eres un asistente de ventas experto en servicios de streaming profesional multicámara para eventos en vivo. Tu empresa se llama \"Live Moments\".\nTU ROL:\n- Generar correos de confirmación personalizados para clientes\n- Adaptar el tono según el tipo de evento\n- Proporcionar recomendaciones relevantes y útiles\n- Ser profesional pero cercano\nTONOS QUE DEBES USAR:\n1. FORMAL (para Eventos Religiosos y Conferencias/Corporativos):\n   - Vocabulario: ceremonias, servicios, presentaciones, audiencia\n   - Saludo: \"Estimado/a [Nombre]\"\n   - Despedida: \"Quedamos atentos. Saludos cordiales,\"\n   - Evitar: emojis excesivos, jerga informal\n2. ENTUSIASTA (para E-Sport/Gaming y Eventos Deportivos):\n   - Vocabulario: acción, jugadas, competencia, fans, emoción\n   - Saludo: \"¡Hola [Nombre]! 🎮\" o \"¡Hola [Nombre]! ⚽\"\n   - Despedida: \"¡Nos vemos en la transmisión! 🔥\"\n   - Usar: emojis relacionados (🎮 🏆 ⚡ 🔥 ⚽ 🏀)\n3. AMIGABLE (para Eventos Sociales):\n   - Vocabulario: celebración, momentos especiales, familia, amigos\n   - Saludo: \"Hola [Nombre], ¡qué emoción! 💝\"\n   - Despedida: \"¡Estamos ansiosos por ser parte de tu celebración! ✨\"\n   - Usar: emojis emotivos (💝 🎉 ✨ 🌟)\nPAQUETES DISPONIBLES:\n- Básico: 1 cámara HD, 1 micrófono, streaming a 1 plataforma\n- Estándar: 2 cámaras HD, 2 micrófonos, overlays básicos\n- Premium: 3 cámaras HD, 3 micrófonos profesionales, overlays avanzados, director técnico\n- Enterprise: 4 cámaras 4K, 4 micrófonos, streaming a 3 plataformas, branding personalizado\nADD-ONS DISPONIBLES:\n- Cámaras y Micrófonos adicionales\n- Internet Starlink (Garantía de conectividad)\n- Overlays Personalizados (Branding)\n- Plataforma Adicional (Multi-streaming)\n- Grabación (Archivo permanente)\nREGLAS IMPORTANTES:\n- NO inventes datos que no tienes\n- NO prometas precios específicos\n- NO garantices disponibilidad sin confirmar\n- SÍ sé honesto sobre limitaciones\n- SÍ proporciona valor en cada recomendación\nFORMATO DE SALIDA:\nDebes devolver ÚNICAMENTE un objeto JSON válido con esta estructura exacta:\n{\n  \"asunto\": \"Asunto del correo\",\n  \"saludo\": \"Saludo personalizado\",\n  \"parrafo_confirmacion\": \"Confirmación de recepción\",\n  \"recomendaciones\": {\n    \"paquete\": \"Recomendación sobre paquete o null\",\n    \"addons\": [\"addon1\", \"addon2\"] o [],\n    \"consideraciones\": \"Consideraciones especiales o null\"\n  },\n  \"proximos_pasos\": [\"paso1\", \"paso2\", \"paso3\"],\n  \"despedida\": \"Despedida personalizada\",\n  \"tono_detectado\": \"formal|entusiasta|amigable\"\n}"
         }
@@ -202,10 +203,11 @@
       "typeVersion": 3,
       "position": [
         1376,
-        -176
+        -224
       ],
       "id": "ae40daec-a4c3-4ce5-829a-c4ab88fca932",
-      "name": "AI Agent"
+      "name": "AI Agent",
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -217,7 +219,7 @@
       "typeVersion": 3.4,
       "position": [
         896,
-        96
+        32
       ],
       "id": "42654e51-a6c1-4a07-b4bc-430234639c08",
       "name": "formularioValido"
@@ -229,8 +231,8 @@
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
       "typeVersion": 1.3,
       "position": [
-        1536,
-        16
+        1600,
+        0
       ],
       "id": "c5483dc2-b66d-41b8-a1d9-73f5c59deed5",
       "name": "Structured Output Parser"
@@ -417,8 +419,8 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        1696,
-        240
+        1808,
+        224
       ],
       "id": "f2c11bee-b320-4d8e-9ec2-d7711699fad1",
       "name": "registroErrores",
@@ -438,8 +440,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        1920,
-        240
+        2032,
+        224
       ],
       "id": "0ab6f9b4-ebde-48a6-81be-db3e7304b4b7",
       "name": "responderCode400"
@@ -451,8 +453,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1696,
-        -64
+        2256,
+        -224
       ],
       "id": "42ed3229-d66e-48f9-ace1-17ddfefc4cd0",
       "name": "procesarRespuesta"
@@ -467,8 +469,8 @@
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
       "position": [
-        1408,
-        240
+        1472,
+        224
       ],
       "id": "ec327094-8204-4389-ba16-ba763efb11d7",
       "name": "correoErrorSoporte",
@@ -490,8 +492,8 @@
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
       "position": [
-        1920,
-        -64
+        2480,
+        -128
       ],
       "id": "4a96f340-2681-48e2-b8e3-03b77ce56274",
       "name": "correoConfirmacionCliente",
@@ -702,8 +704,8 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        2144,
-        -64
+        2704,
+        -128
       ],
       "id": "a83ebb50-f89b-4607-bab2-2d01b0766460",
       "name": "resgitroExitoso",
@@ -725,11 +727,116 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        2368,
-        -64
+        2928,
+        -128
       ],
       "id": "c4a59823-db73-4d58-a02d-6282c8c6e3bd",
       "name": "responderCode200"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1472,
+        0
+      ],
+      "id": "0326da8a-b810-48f4-bf0b-cdae62c4e6b8",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "MM80PhaQWCH14xUF",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3a36eb41-fa22-49e2-9952-8e1a5d851682",
+              "name": "",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2032,
+        -32
+      ],
+      "id": "adc9e89a-7f99-40e8-9d77-82c4543f4ab3",
+      "name": "setEmailGenérico"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.item.json;\n\n// Template de email genérico (sin personalización de IA)\nconst asuntoGenerico = `✅ Confirmación de Solicitud - Live Moments`;\n\nconst cuerpoGenerico = `\n<!DOCTYPE html>\n<html>\n<head>\n    <style>\n        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }\n        .container { max-width: 600px; margin: 0 auto; padding: 20px; }\n        .header { background: linear-gradient(135deg, #D4AF37 0%, #F4D03F 100%); color: #1a1a1a; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }\n        .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }\n        .footer { text-align: center; margin-top: 20px; color: #666; font-size: 0.9em; }\n        .highlight { color: #D4AF37; font-weight: bold; }\n    </style>\n</head>\n<body>\n    <div class=\"container\">\n        <div class=\"header\">\n            <h1>¡Solicitud Recibida!</h1>\n        </div>\n        <div class=\"content\">\n            <p>Hola <strong>${input.nombre_cliente}</strong>,</p>\n            \n            <p>Hemos recibido exitosamente tu solicitud para el evento <span class=\"highlight\">${input.tipo_evento}</span> programado para el <span class=\"highlight\">${new Date(input.fecha_evento).toLocaleDateString('es-ES')}</span>.</p>\n            \n            <p>Nuestro equipo de <strong>Live Moments Production</strong> revisará los detalles y se pondrá en contacto contigo en las próximas 24 horas para confirmar disponibilidad y coordinar los siguientes pasos.</p>\n            \n            <p><strong>Resumen de tu solicitud:</strong></p>\n            <ul>\n                <li>📅 Fecha: ${new Date(input.fecha_evento).toLocaleDateString('es-ES')}</li>\n                <li>📍 Ubicación: ${input.ubicacion_evento}</li>\n                <li>📦 Paquete: ${input.paquete_interes}</li>\n                <li>⏱️ Duración: ${input.duracion_estimada}</li>\n            </ul>\n            \n            <p>Si tienes alguna pregunta urgente, no dudes en contactarnos.</p>\n            \n            <p>¡Gracias por confiar en nosotros para conservar tus mejores momentos!</p>\n        </div>\n        <div class=\"footer\">\n            <p>Live Moments Production | Streaming Profesional</p>\n            <p>Este es un correo automático, por favor no respondas a este mensaje.</p>\n        </div>\n    </div>\n</body>\n</html>\n`;\n\nreturn {\n    ...input,\n    asunto_correo: asuntoGenerico,\n    cuerpo_correo: cuerpoGenerico,\n    tipo_email: \"generico_fallback\"\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2256,
+        -32
+      ],
+      "id": "2d51db5b-456b-441b-8e5d-11f5a50b8b27",
+      "name": "procesarEmailGenerico"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "6b693c44-67f5-47cf-9f60-c6a25e9f9910",
+              "leftValue": "={{$json.output}}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "cf82e1c2-3b18-420a-b5e5-735b9b2b4632",
+              "leftValue": "={{ $json.error }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1808,
+        -128
+      ],
+      "id": "70b8ff63-8563-429c-949e-0dce54db4002",
+      "name": "¿IA Exitosa?"
     }
   ],
   "pinData": {},
@@ -829,7 +936,7 @@
       "main": [
         [
           {
-            "node": "procesarRespuesta",
+            "node": "¿IA Exitosa?",
             "type": "main",
             "index": 0
           }
@@ -901,13 +1008,64 @@
           }
         ]
       ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "setEmailGenérico": {
+      "main": [
+        [
+          {
+            "node": "procesarEmailGenerico",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "procesarEmailGenerico": {
+      "main": [
+        [
+          {
+            "node": "correoConfirmacionCliente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿IA Exitosa?": {
+      "main": [
+        [
+          {
+            "node": "procesarRespuesta",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "setEmailGenérico",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "4f241dd3-c47f-487a-a280-57ce1ace7222",
+  "versionId": "db8f4938-5625-4d6d-8af8-8a4471859f65",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "1ab9a267a30a8b05c862ed2f3a5bf97f2834c800f69e8170765f7e804b1a19e7"
