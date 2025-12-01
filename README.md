@@ -41,11 +41,6 @@ Sistema completo de automatización para **Live Moments Production**, empresa de
 ├── README.md                          # Este archivo
 ├── VERSION_1.0.md                     # Changelog de la versión 1.0
 ├── ROADMAP.md                         # Planificación de versiones futuras
-├── GEMINI.md                          # Instrucciones de colaboración con IA
-├── buenas-practicas.md                # Principios generales de ingeniería
-├── buenas-practicas-n8n.md            # Guía específica de N8N
-├── buenas-practicas-python.md         # Guía de desarrollo Python
-├── buenas-practicas-javascript.md     # Guía de desarrollo JavaScript
 ├── SCRIPTS_N8N.md                     # Scripts reutilizables documentados
 ├── workflow_streaming.json            # Workflow principal de N8N
 ├── formulario.html                    # Frontend del formulario

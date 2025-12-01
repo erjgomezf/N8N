@@ -114,10 +114,6 @@
 ## 📚 Documentación Creada
 
 1. **README.md** - Documentación principal
-2. **GEMINI.md** - Instrucciones de colaboración
-3. **buenas-practicas.md** - Principios generales
-4. **buenas-practicas-n8n.md** - Guía específica de N8N
-5. **buenas-practicas-javascript.md** - Guía de JavaScript
 6. **SCRIPTS_N8N.md** - Scripts reutilizables
 7. **VERSION_1.0.md** - Este documento
 8. **ROADMAP.md** - Planificación futura
