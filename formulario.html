@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        window.WEBHOOK_URL = '{{ $('Configuracion').item.json.webhook_url }}';
+    </script>
     <title>Solicitud de Servicio - Streaming Profesional</title>
     <style>
         * {
@@ -1795,7 +1798,7 @@
                 console.log("Enviando datos a N8N:", formData);
 
                 // 3. Enviar a N8N Webhook
-                const webhookUrl = 'https://erjgomezf.app.n8n.cloud/webhook-test/streaming-service';
+                const webhookUrl = window.WEBHOOK_URL || '...fallback...';
                 
                 const response = await fetch(webhookUrl, {
                     method: 'POST',

@@ -145,6 +145,34 @@ Webhook → Calcular Días → Clasificar Urgencia → Validar Datos
 - Gmail API
 - Google Sheets API
 
+### Desarrollo Local
+- Docker (N8N containerizado)
+- Cloudflare Tunnel (exposición de webhooks)
+
+---
+
+## 💻 Desarrollo Local
+
+### Requisitos
+- Docker instalado
+- Cloudflared instalado
+
+### Inicio Rápido
+
+1. **Iniciar N8N:**
+   ```bash
+   ./start-n8n.sh
+   ```
+
+2. **Exponer con Cloudflare Tunnel:**
+   ```bash
+   ./expose-n8n.sh
+   ```
+
+3. **Copiar URL del tunnel** y actualizar en `formulario.html`
+
+Ver [DESARROLLO_LOCAL.md](DESARROLLO_LOCAL.md) para guía completa.
+
 ---
 
 ## 📚 Documentación
