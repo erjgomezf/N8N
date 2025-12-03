@@ -1,276 +1,240 @@
-# 🎬 Live Moments - Sistema de Streaming Profesional
+# 🎬 Live Moments - Sistema de Captura de Leads
 
-**Versión 1.0** | Workflow automatizado para gestión de solicitudes de servicios de streaming
+Sistema automatizado de captura y procesamiento de solicitudes de servicios de streaming para eventos, implementado con N8N y formulario web interactivo.
 
 ---
 
-## 📋 Descripción del Proyecto
+## 📋 Descripción
 
-Sistema completo de automatización para **Live Moments Production**, empresa de streaming profesional multicámara para eventos en vivo. El sistema gestiona solicitudes de clientes desde un formulario web hasta la confirmación personalizada por email, con integración de IA para personalización y sistema robusto de fallback.
+Este proyecto es un sistema completo de captura de leads que incluye:
+- Formulario web multi-paso con validación en tiempo real
+- Workflow automatizado en N8N para procesamiento de datos
+- Integración con Gmail, Google Sheets y Telegram
+- Clasificación automática de urgencia según criterios de negocio
 
 ---
 
 ## ✨ Características Principales
 
-### 🎯 Funcionalidades Core
-- ✅ Formulario web multi-paso con validación en tiempo real
-- ✅ Clasificación automática de urgencia
-- ✅ Integración con Google Gemini para personalización de correos
-- ✅ Sistema de fallback robusto (email genérico si IA falla)
-- ✅ Notificaciones por Gmail (cliente y equipo)
-- ✅ Registro en Google Sheets (solicitudes exitosas y errores)
+### 🎯 Formulario Web
+- **Wizard de 4 pasos** con indicador de progreso
+- **Campos dinámicos** según tipo de evento
+- **Validación en tiempo real** con feedback visual
+- **Diseño responsive** con glassmorphism
+- **Fondos dinámicos** que cambian según el evento
 
-### 🎨 Frontend
-- Diseño responsive con glassmorphism
-- Fondos dinámicos según tipo de evento
-- Tooltips inteligentes adaptativos (desktop/móvil)
-- Wizard de 4 pasos con validación
+### 🤖 Workflow N8N
+- **Cálculo automático** de días hasta el evento
+- **Clasificación de urgencia** (Alta 🔴, Media 🟡, Normal 🟢)
+- **Validación de datos** en backend
+- **Bifurcación inteligente** (datos válidos vs inválidos)
+- **Registro en Google Sheets** (solicitudes y errores)
+- **Notificaciones por Gmail y Telegram**
 
-### 🤖 Backend (N8N)
-- 15 nodos configurados
-- Validación en múltiples capas
-- Manejo robusto de errores
-- Fallback automático para IA
+---
+
+## 🛠️ Stack Tecnológico
+
+- **Frontend:** HTML5, CSS3, JavaScript (Vanilla)
+- **Backend:** N8N (Workflow Automation)
+- **Integraciones:**
+  - Gmail API (Envío de correos)
+  - Google Sheets API (Almacenamiento)
+  - Telegram Bot API (Notificaciones)
+- **Infraestructura:** Docker, Cloudflare Tunnel
 
 ---
 
 ## 📁 Estructura del Proyecto
 
 ```
-/home/programar/Documentos/N8N/
-├── README.md                          # Este archivo
-├── VERSION_1.0.md                     # Changelog de la versión 1.0
-├── ROADMAP.md                         # Planificación de versiones futuras
-├── SCRIPTS_N8N.md                     # Scripts reutilizables documentados
-├── workflow_streaming.json            # Workflow principal de N8N
-├── formulario.html                    # Frontend del formulario
-├── img/                               # Recursos visuales
-└── docs/                              # Documentación de desarrollo
-    ├── DISEÑO_WORKFLOW.md
-    ├── FLUJO_ERRORES.md
-    ├── PAYLOADS_PRUEBA.md
-    ├── RECURSOS_IMG.md
-    └── TEMPLATES_EMAIL.md
+N8N/
+├── formulario.html              # Formulario web principal
+├── workflow_streaming.json      # Workflow de N8N (exportado)
+├── SCRIPTS_N8N.md              # Scripts JavaScript para nodos
+├── GUIA_SCRIPTS.md             # Guía de uso de scripts
+├── GUIA_GMAIL_OAUTH.md         # Configuración de Gmail
+├── GUIA_TELEGRAM.md            # Configuración de Telegram
+├── README.md                   # Este archivo
+├── ROADMAP.md                  # Planificación futura
+├── docs/
+│   ├── DISEÑO_WORKFLOW.md      # Diseño completo del workflow
+│   ├── PAYLOADS_PRUEBA.md      # Ejemplos para testing
+│   ├── RECURSOS_IMG.md         # URLs de imágenes
+│   └── TEMPLATE_EMAIL_ERROR.md # Template de email de error
+├── buenas-practicas/
+│   ├── buenas-practicas.md
+│   ├── buenas-practicas-n8n.md
+│   ├── buenas-practicas-javascript.md
+│   └── buenas-practicas-python.md
+├── img/                        # Imágenes del formulario
+├── start-n8n.sh               # Script para iniciar N8N
+├── stop-n8n.sh                # Script para detener N8N
+└── expose-n8n.sh              # Script para exponer con Cloudflare
 ```
 
 ---
 
 ## 🚀 Inicio Rápido
 
-### Requisitos Previos
-- Cuenta de N8N (Cloud o Self-hosted)
-- Credenciales de Google:
-  - Gmail (OAuth2)
-  - Google Sheets (OAuth2)
-  - Google Gemini API Key
-
-### Instalación
-
-1. **Importar el Workflow:**
-   ```bash
-   # En N8N: Workflows → Import from File
-   # Seleccionar: workflow_streaming.json
-   ```
-
-2. **Configurar Credenciales:**
-   - Gmail OAuth2
-   - Google Sheets OAuth2
-   - Google Gemini API
-
-3. **Actualizar IDs de Google Sheets:**
-   - Crear dos hojas: "Solicitudes Exitosas" y "Registro de Errores"
-   - Actualizar IDs en nodos `resgitroExitoso` y `registroErrores`
-
-4. **Configurar Formulario:**
-   - Editar `formulario.html`
-   - Actualizar webhook URL (línea ~XXX)
-   - Desplegar en tu servidor web
-
-5. **Activar Workflow:**
-   - En N8N, activar el workflow
-   - Probar con datos de prueba
-
----
-
-## 📊 Arquitectura del Workflow
-
-### Flujo Principal
-
-```
-Webhook → Calcular Días → Clasificar Urgencia → Validar Datos
-                                                      ↓
-                                            ┌─────────┴─────────┐
-                                            ↓                   ↓
-                                    DATOS VÁLIDOS        DATOS INVÁLIDOS
-                                            ↓                   ↓
-                                      AI Agent          Email Error (Equipo)
-                                            ↓                   ↓
-                                    ¿IA Exitosa?        Sheets (Errores)
-                                            ↓                   ↓
-                                    ┌───────┴───────┐   Responder 400
-                                    ↓               ↓
-                              Personalizado    Genérico
-                                    ↓               ↓
-                                    └───────┬───────┘
-                                            ↓
-                                  Email Confirmación
-                                            ↓
-                                  Sheets (Exitosos)
-                                            ↓
-                                    Responder 200
-```
-
-### Nodos Clave
-
-1. **calcularDias** - Enriquece datos con días hasta evento
-2. **clasificarUrgencia** - Lógica de priorización
-3. **validarDatos** - Validación backend
-4. **AI Agent** - Personalización con Gemini (Continue On Fail)
-5. **¿IA Exitosa?** - Validación de respuesta de IA
-6. **procesarRespuesta** - Formateo de email personalizado
-7. **procesarEmailGenerico** - Fallback si IA falla
-
----
-
-## 🛠️ Stack Tecnológico
-
-### Frontend
-- HTML5
-- CSS3 (Vanilla)
-- JavaScript (ES6+)
-
-### Backend/Automatización
-- N8N
-- Google Gemini (IA)
-- Gmail API
-- Google Sheets API
-
-### Desarrollo Local
-- Docker (N8N containerizado)
-- Cloudflare Tunnel (exposición de webhooks)
-
----
-
-## 💻 Desarrollo Local
-
-### Requisitos
+### Prerrequisitos
 - Docker instalado
-- Cloudflared instalado
+- Cloudflared instalado (para desarrollo local)
+- Cuenta de Google (para Gmail y Sheets)
+- Bot de Telegram creado
 
-### Inicio Rápido
+### 1. Iniciar N8N Local
 
-1. **Iniciar N8N:**
-   ```bash
-   ./start-n8n.sh
-   ```
+```bash
+# Terminal 1: Iniciar N8N
+./start-n8n.sh
 
-2. **Exponer con Cloudflare Tunnel:**
-   ```bash
-   ./expose-n8n.sh
-   ```
+# Terminal 2: Exponer con Cloudflare Tunnel
+./expose-n8n.sh
+```
 
-3. **Copiar URL del tunnel** y actualizar en `formulario.html`
+### 2. Configurar Credenciales
 
-Ver [DESARROLLO_LOCAL.md](DESARROLLO_LOCAL.md) para guía completa.
+Sigue las guías de configuración:
+- [Gmail OAuth](GUIA_GMAIL_OAUTH.md)
+- [Telegram Bot](GUIA_TELEGRAM.md)
 
----
+### 3. Importar Workflow
 
-## 📚 Documentación
+1. Abre N8N en `http://localhost:5678`
+2. Importa `workflow_streaming.json`
+3. Configura las credenciales en cada nodo
 
-### Guías de Buenas Prácticas
-- [Principios Generales](buenas-practicas.md) - SOLID, DRY, KISS, patrones de diseño
-- [N8N Workflows](buenas-practicas-n8n.md) - Diseño, seguridad, patrones, **fallbacks de IA**
-- [JavaScript](buenas-practicas-javascript.md) - ES6+, manejo de datos, N8N específico
-- [Python](buenas-practicas-python.md) - Django, FastAPI, inyección de dependencias
+### 4. Actualizar URL del Webhook
 
-### Scripts Reutilizables
-- [SCRIPTS_N8N.md](SCRIPTS_N8N.md) - Colección de scripts documentados
+Copia la URL del Cloudflare Tunnel y actualízala en `formulario.html`:
 
-### Información de Versión
-- [VERSION_1.0.md](VERSION_1.0.md) - Changelog completo de v1.0
-- [ROADMAP.md](ROADMAP.md) - Planificación de v1.1 (Telegram) y v1.2 (WhatsApp)
+```javascript
+const webhookUrl = 'https://tu-url.trycloudflare.com/webhook-test/streaming-service';
+```
 
----
+### 5. Probar el Formulario
 
-## 🎓 Lecciones Aprendidas
-
-### Fallbacks para IA
-**Problema:** APIs de IA pueden fallar  
-**Solución:** Implementar fallback con template genérico  
-**Resultado:** 100% de emails enviados, incluso si IA falla
-
-### Validación en Múltiples Capas
-**Problema:** Datos inválidos llegando al workflow  
-**Solución:** Validar en frontend + backend + lógica de negocio  
-**Resultado:** Reducción de 90% en errores de procesamiento
-
-### Nomenclatura Descriptiva
-**Problema:** Difícil identificar qué nodo falló en logs  
-**Solución:** Nombres descriptivos como `¿IA Exitosa?` en lugar de `IF`  
-**Resultado:** Debugging 3x más rápido
+Abre `formulario.html` en tu navegador y envía una solicitud de prueba.
 
 ---
 
-## 🚀 Próximas Versiones
+## 📊 Flujo del Workflow
 
-### v1.1 (Q1 2025) - Telegram
-- Notificaciones por Telegram Bot
-- Comandos de consulta (`/solicitudes`, `/urgentes`)
-
-### v1.2 (Q2 2025) - WhatsApp
-- Confirmación por WhatsApp Business API
-- Respuestas automáticas
-- Recordatorios de eventos
-
-### v2.0 (Q3-Q4 2025) - Plataforma Completa
-- Dashboard de administración
-- Base de datos real (PostgreSQL)
-- Sistema de cotizaciones
-- Pagos en línea
-
-Ver [ROADMAP.md](ROADMAP.md) para más detalles.
+```
+Webhook
+  ↓
+Calcular Días Restantes
+  ↓
+Clasificar Urgencia
+  ↓
+Validar Datos
+  ↓
+IF (¿Datos Válidos?)
+  ├─ TRUE → Gmail (Confirmación) + Sheets (Registro) + Telegram (Notificación)
+  └─ FALSE → Gmail (Error) + Sheets (Errores)
+```
 
 ---
 
-## 🔐 Consideraciones de Seguridad
+## 🧪 Testing
 
-- ✅ Credenciales en sistema de N8N (no hardcodeadas)
-- ✅ Validación de datos en múltiples capas
-- ✅ Sanitización de inputs
-- ✅ Manejo seguro de errores
-- ⚠️ **Pendiente:** Autenticación de webhook (v1.1)
-- ⚠️ **Pendiente:** Rate limiting (v1.1)
+Usa los payloads de prueba en `docs/PAYLOADS_PRUEBA.md` con Postman para probar el workflow:
 
----
+```bash
+# Ejemplo de payload
+POST https://tu-url.trycloudflare.com/webhook-test/streaming-service
+Content-Type: application/json
 
-## 🤝 Sobre el Autor
-
-Estudiante de programación enfocado en desarrollo backend con Python (Django, FastAPI) y automatización con N8N.
-
-**Contacto:**
-- Email: erjgomezf@gmail.com
-- GitHub: [Tu perfil]
+{
+  "tipo_evento": "Eventos sociales",
+  "fecha_evento": "2025-12-01",
+  "nombre_cliente": "María González",
+  ...
+}
+```
 
 ---
 
-## 📄 Licencia
+## 📚 Documentación Adicional
 
-MIT License - Proyecto educativo de código abierto
-
----
-
-## 🙏 Agradecimientos
-
-- **N8N Community** - Documentación y ejemplos
-- **Google Gemini** - API de IA accesible
-- **Comunidad de desarrollo** - Inspiración y aprendizaje
+- **[DISEÑO_WORKFLOW.md](docs/DISEÑO_WORKFLOW.md)** - Diseño detallado del workflow
+- **[SCRIPTS_N8N.md](SCRIPTS_N8N.md)** - Scripts JavaScript para nodos Code
+- **[PAYLOADS_PRUEBA.md](docs/PAYLOADS_PRUEBA.md)** - Ejemplos de datos para testing
+- **[GUIA_SCRIPTS.md](GUIA_SCRIPTS.md)** - Cómo ejecutar los scripts de Docker
+- **[ROADMAP.md](ROADMAP.md)** - Planificación de futuras versiones
 
 ---
 
-**Versión Actual:** 1.0  
-**Estado:** ✅ Producción  
-**Última Actualización:** 2025-12-01
+## 🔧 Mantenimiento
+
+### Reconectar Gmail (Cada 7 días)
+Como la app de Google está en modo "Testing", debes reconectar Gmail semanalmente:
+1. Abre las credenciales en N8N
+2. Haz clic en "Reconnect"
+3. Autoriza nuevamente
+
+### Actualizar URL de Cloudflare
+Cada vez que reinicies el tunnel, actualiza la URL en `formulario.html`.
+
+### Backup del Workflow
+Exporta regularmente el workflow desde N8N:
+```
+Settings → Export → workflow_streaming.json
+```
 
 ---
 
-> 💡 **Tip:** Revisa [VERSION_1.0.md](VERSION_1.0.md) para el changelog completo y [ROADMAP.md](ROADMAP.md) para ver qué viene en las próximas versiones.
+## 🎯 Tipos de Eventos Soportados
+
+1. **Eventos Sociales** (Bodas, cumpleaños, reuniones)
+2. **Conferencias y Eventos Corporativos**
+3. **E-Sport y Gaming**
+4. **Conciertos y Eventos Artísticos**
+5. **Eventos Religiosos**
+6. **Eventos Deportivos**
+
+---
+
+## 📦 Paquetes Disponibles
+
+- **Básico** - 1 cámara HD, streaming a 1 plataforma
+- **Estándar** - 2 cámaras HD, streaming a 2 plataformas
+- **Premium** - 3 cámaras HD, overlays avanzados
+- **Enterprise** - Solución personalizada
+
+---
+
+## 🤝 Contribuciones
+
+Este es un proyecto educativo. Si deseas contribuir:
+1. Fork el repositorio
+2. Crea una rama para tu feature
+3. Haz commit de tus cambios
+4. Abre un Pull Request
+
+---
+
+## 📝 Licencia
+
+MIT License - Ver archivo LICENSE para más detalles
+
+---
+
+## 👤 Autor
+
+Desarrollado como proyecto de aprendizaje en automatización de workflows y desarrollo web.
+
+---
+
+## 🔗 Enlaces Útiles
+
+- [Documentación de N8N](https://docs.n8n.io/)
+- [Gmail API](https://developers.google.com/gmail/api)
+- [Google Sheets API](https://developers.google.com/sheets/api)
+- [Telegram Bot API](https://core.telegram.org/bots/api)
+- [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/)
+
+---
+
+**Última Actualización:** 2025-12-03
