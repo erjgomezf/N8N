@@ -3,197 +3,1002 @@
   "nodes": [
     {
       "parameters": {
+        "workflowId": "ID_DEL_WORKFLOW_CENTRAL",
+        "mode": "each",
+        "options": {}
+      },
+      "id": "efa467fc-50aa-4d25-bd7e-0ce89582f2ff",
+      "name": "Llamar Workflow Central",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        384,
+        584
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.telegram.org/bot8450594238:AAHSw3lVD_SKbHhJavglYKsd0WKptmsulV0/sendMessage",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\n  (() => {\n    const buttons =  $('switchAccion').item.json.buttons;\n    \n    // Objeto base\n    const body = {\n      \"chat_id\": $('telegramTrigger').item.json.message?.chat?.id || $('telegramTrigger').item.json.callback_query?.message?.chat?.id,\n      \"text\": $('switchAccion').item.json.text\n    };\n\n    // Solo agregar reply_markup si hay botones válidos\n    if (buttons && Array.isArray(buttons) && buttons.length > 0) {\n      body.reply_markup = {\n        \"inline_keyboard\": buttons\n      };\n    }\n\n    return body;\n  })()\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        384,
+        776
+      ],
+      "id": "8b34a686-f60e-49a8-a42e-cb7d74059784",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
         "updates": [
           "message",
           "callback_query"
         ],
         "additionalFields": {}
       },
-      "id": "trigger-telegram",
-      "name": "Telegram Trigger",
+      "id": "1d6e923c-60d8-4dc5-baff-4fd48b2b57b0",
+      "name": "telegramTrigger",
       "type": "n8n-nodes-base.telegramTrigger",
       "typeVersion": 1,
       "position": [
-        460,
-        300
+        -1024,
+        880
       ],
       "webhookId": "telegram-webhook-id",
       "credentials": {
         "telegramApi": {
-          "id": "YOUR_TELEGRAM_CREDENTIAL_ID",
-          "name": "Telegram Live Moments"
+          "id": "pwBAa59uy9ggvhua",
+          "name": "Telegram account"
         }
       }
     },
     {
       "parameters": {
-        "operation": "lookup",
-        "sheetId": "YOUR_GOOGLE_SHEET_ID",
-        "range": "Sesiones_Telegram!A:E",
-        "lookupColumn": "chat_id",
-        "lookupValue": "={{ $json.message.chat.id || $json.callback_query.message.chat.id }}",
+        "documentId": {
+          "__rl": true,
+          "value": "1RpFKNcF80lQgmt3k4-YTU0UJg9Vwih1_Gsd8tD66yuA",
+          "mode": "list",
+          "cachedResultName": "Sesiones_Telegram",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RpFKNcF80lQgmt3k4-YTU0UJg9Vwih1_Gsd8tD66yuA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hoja 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RpFKNcF80lQgmt3k4-YTU0UJg9Vwih1_Gsd8tD66yuA/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "chat_id",
+              "lookupValue": "={{ $('telegramTrigger').item.json.message?.chat?.id || $('telegramTrigger').item.json.callback_query?.message?.chat?.id }}"
+            }
+          ]
+        },
+        "combineFilters": "=OR",
         "options": {}
       },
-      "id": "get-session",
-      "name": "Buscar Sesion",
+      "id": "d918e3c2-b6f4-4289-8569-d659232c729e",
+      "name": "buscarSesion",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        680,
-        300
+        -800,
+        872
       ],
+      "alwaysOutputData": true,
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "YOUR_SHEETS_CREDENTIAL_ID",
-          "name": "Google Sheets Account"
+          "id": "pn9KPrV0bTFz3NPp",
+          "name": "Google Sheets account"
         }
-      }
+      },
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
-        "jsCode": "// Código de telegramLogic.js se pegará aquí\n// IMPORTANTE: Este nodo espera que el código completo de telegramLogic.js\n// sea pegado aquí. \n\n// Mapeo de inputs para que funcione el script:\nconst message = $('Telegram Trigger').item.json.message || $('Telegram Trigger').item.json.callback_query;\nconst session = $input.item.json || {}; // Datos de Google Sheets\n\n// ... PEGAR CÓDIGO DE telegramLogic.js AQUÍ ...\n\n// Al final del script, retornar el response\nreturn response;"
+        "jsCode": "/**\n * ============================================\n * NODO: Lógica del Bot de Telegram (State Machine)\n * ============================================\n * \n * PROPÓSITO:\n * Gestionar el flujo de la conversación del bot de reservaciones.\n * Determina el siguiente paso basado en el estado actual y la entrada del usuario.\n * \n * INPUT (desde nodos anteriores):\n * - message: Objeto del mensaje de Telegram (texto, callback_query, etc.)\n * - session: Estado actual del usuario desde Google Sheets (paso_actual, datos_json)\n * \n * OUTPUT:\n * - response_text: Texto a enviar al usuario\n * - response_buttons: Botones inline (si aplica)\n * - next_step: Nuevo paso a guardar en Sheets\n * - update_data: Nuevos datos a guardar en Sheets\n * - action: Acción a ejecutar (ej: 'reply', 'send_to_central', 'cancel')\n */\n\n// ============================================\n// CONFIGURACIÓN\n// ============================================\n\nconst STEPS = {\n  START: 'start',\n  TIPO_EVENTO: 'tipo_evento',\n  FECHA: 'fecha',\n  CIUDAD: 'ciudad',\n  PAQUETE: 'paquete',\n  NOMBRE: 'nombre',\n  EMAIL: 'email',\n  TELEFONO: 'telefono',\n  CONFIRMACION: 'confirmacion',\n  VALIDACION_IA: 'validacion_ia',  // Nuevo: validación con Gemini\n  COMPLETADO: 'completado'\n};\n\n// Configuración del AI Validator\nconst AI_CONFIG = {\n  MAX_INTENTOS: 4,\n  ORIGEN: 'telegram',  // Identificador del canal\n  CAMPOS_REQUERIDOS: [\n    'tipo_evento',\n    'fecha_evento',\n    'ubicacion_evento',\n    'paquete_interes',\n    'nombre_cliente',\n    'email_cliente',\n    'telefono_cliente'\n  ]\n};\n\nconst OPTIONS = {\n  TIPO_EVENTO: [\n    [{ text: '🎊 Eventos Sociales', callback_data: 'Eventos sociales' }],\n    [{ text: '🏢 Corporativo', callback_data: 'Conferencias y eventos corporativos' }],\n    [{ text: '🎮 E-Sports', callback_data: 'E-Sport y Gaming' }],\n    [{ text: '🎵 Conciertos', callback_data: 'Conciertos y Eventos Artísticos' }],\n    [{ text: '⛪ Religiosos', callback_data: 'Eventos Religiosos' }],\n    [{ text: '⚽ Deportivos', callback_data: 'Eventos Deportivos' }]\n  ],\n  PAQUETE: [\n    [{ text: '🥉 Básico (1 Cam)', callback_data: 'Básico' }],\n    [{ text: '🥈 Estándar (2 Cam)', callback_data: 'Estándar' }],\n    [{ text: '🥇 Premium (3 Cam)', callback_data: 'Premium' }],\n    [{ text: '💎 Enterprise (4K)', callback_data: 'Enterprise' }]\n  ],\n  CONFIRMACION: [\n    [{ text: '✅ Confirmar y Enviar', callback_data: 'confirmar' }],\n    [{ text: '❌ Cancelar', callback_data: 'cancelar' }]\n  ]\n};\n\n// ============================================\n// VALIDADORES\n// ============================================\n\nconst Validators = {\n  fecha: (text) => {\n    // Regex DD/MM/YYYY\n    const regex = /^(\\d{2})\\/(\\d{2})\\/(\\d{4})$/;\n    const match = text.match(regex);\n    if (!match) return { valid: false, error: 'Formato incorrecto. Usa DD/MM/YYYY (ej: 25/12/2025)' };\n    \n    const day = parseInt(match[1]);\n    const month = parseInt(match[2]) - 1; // Meses 0-11\n    const year = parseInt(match[3]);\n    \n    const date = new Date(year, month, day);\n    const now = new Date();\n    now.setHours(0,0,0,0);\n    \n    if (date < now) return { valid: false, error: 'La fecha debe ser futura.' };\n    \n    return { valid: true, value: text };\n  },\n  \n  ciudad: (text) => {\n    if (!text || text.length < 3) return { valid: false, error: 'Por favor escribe una ciudad válida (mínimo 3 letras).' };\n    return { valid: true, value: text };\n  },\n  \n  nombre: (text) => {\n    if (!text || text.length < 3) return { valid: false, error: 'Por favor escribe tu nombre completo.' };\n    return { valid: true, value: text };\n  },\n  \n  email: (text) => {\n    const regex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\n    if (!regex.test(text)) return { valid: false, error: 'Correo inválido. Ejemplo: nombre@correo.com' };\n    return { valid: true, value: text };\n  },\n  \n  telefono: (text) => {\n    // Acepta +, espacios, guiones y números. Mínimo 10 dígitos.\n    const clean = text.replace(/\\D/g, '');\n    if (clean.length < 10) return { valid: false, error: 'Número inválido. Incluye código de área (ej: +58 412...)' };\n    return { valid: true, value: text };\n  }\n};\n\n// ============================================\n// LÓGICA PRINCIPAL\n// ============================================\n\n// ... (Configuración y Validadores igual que antes) ...\n\n// ============================================\n// LÓGICA PRINCIPAL\n// ============================================\n\n// ============================================\n// MAPEO DE INPUTS (N8N)\n// ============================================\n\n// 1. Obtener el update de Telegram (siempre del nodo Trigger)\nlet telegramUpdate = {};\ntry {\n    telegramUpdate = $('telegramTrigger').first().json;\n} catch (e) {\n    console.log('⚠️ No se pudo leer telegramTrigger, usando input directo');\n    telegramUpdate = $input.item.json;\n}\n\n// 2. Obtener la sesión (del nodo buscarSesion)\nlet sessionData = {};\ntry {\n    // Intentamos leer del nodo buscarSesion si existe\n    sessionData = $('buscarSesion').first().json;\n} catch (e) {\n    console.log('⚠️ No se pudo leer buscarSesion, asumiendo sesión nueva');\n    sessionData = {};\n}\n\n// 3. Combinar todo en un objeto de trabajo\nconst update = {\n    ...telegramUpdate,\n    ...sessionData\n};\n\n// 4. Extraer datos específicos\nconst session = {\n    paso_actual: sessionData.paso_actual || null,\n    datos_json: sessionData.datos_json || null,\n    intentos_fallidos: sessionData.intentos_fallidos || 0\n};\n\nconst incomingText = telegramUpdate.message?.text || '';\nconst incomingCallback = telegramUpdate.callback_query?.data || null;\n\n// Debugging\nconsole.log('--- DEBUG INFO ---');\nconsole.log('Telegram Update:', telegramUpdate);\nconsole.log('Session Data:', sessionData);\nconsole.log('Incoming Callback:', incomingCallback);\nconsole.log('Current Step:', session.paso_actual);\nconsole.log('------------------');\n\nlet currentStep = session.paso_actual || STEPS.START;\nconst currentData = session.datos_json ? JSON.parse(session.datos_json) : {};\nconst intentos = parseInt(session.intentos_fallidos || 0);\n\n// FALLBACK: Si estamos en START pero recibimos un callback, asumimos que es respuesta al menú\n// Esto corrige el problema si la sesión no se guardó/recuperó correctamente\nif (currentStep === STEPS.START && incomingCallback) {\n    console.log('⚠️ Detectado callback en paso START. Forzando paso FECHA (Recovery Mode).');\n    currentStep = STEPS.FECHA;\n}\n\nlet response = {\n  text: '',\n  buttons: null, // Array de botones para N8N\n  next_step: currentStep,\n  update_data: currentData,\n  action: 'reply',\n  new_intentos: 0 // Por defecto reseteamos intentos si hay éxito\n};\n\n// Función helper para manejar validación con fallback\n// fieldName: nombre del campo donde guardar el dato (ej: 'fecha_evento', 'nombre_cliente')\nfunction handleValidation(validatorResult, rawText, successNextStep, successMessage, fieldName) {\n  if (validatorResult.valid) {\n    // Éxito: Guardamos dato limpio y avanzamos\n    response.update_data[fieldName] = validatorResult.value;\n    \n    response.text = successMessage;\n    response.next_step = successNextStep;\n    response.new_intentos = 0;\n    return true;\n  } else {\n    // Error\n    if (intentos >= 1) {\n      // FALLBACK: Segundo error, aceptamos el dato tal cual\n      response.update_data[fieldName] = rawText;\n      response.update_data.revision_manual = true; // Flag para ventas\n      response.update_data[`error_${fieldName}`] = validatorResult.error;\n      \n      response.text = `⚠️ No pude validar este dato, pero lo anoté tal cual para que un humano lo revise.\\n\\nContinuemos... ${successMessage}`;\n      response.next_step = successNextStep;\n      response.new_intentos = 0;\n      return true;\n    } else {\n      // Primer error: Pedimos intentar de nuevo\n      response.text = `❌ ${validatorResult.error}\\n\\nPor favor intenta de nuevo.`;\n      response.new_intentos = intentos + 1;\n      return false;\n    }\n  }\n}\n\n// Manejo de Comandos Globales\nif (incomingText === '/cancelar') {\n  return {\n    text: '🚫 Reservación cancelada. Escribe /reservar para comenzar de nuevo.',\n    action: 'cancel_session'\n  };\n}\n\nif (incomingText === '/start' || incomingText === '/reservar') {\n  return {\n    text: '👋 ¡Hola! Soy el asistente de Live Moments.\\n\\n¿Qué tipo de evento deseas transmitir?',\n    buttons: OPTIONS.TIPO_EVENTO,\n    next_step: STEPS.FECHA,\n    action: 'reply',\n    new_intentos: 0\n  };\n}\n\n// Máquina de Estados\nswitch (currentStep) {\n  \n  case STEPS.START:\n    response.text = '👋 ¡Hola! Para comenzar una reservación, elige una opción:';\n    response.buttons = OPTIONS.TIPO_EVENTO;\n    response.next_step = STEPS.FECHA;\n    break;\n\n  case STEPS.FECHA:\n    // Input anterior: TIPO_EVENTO\n    if (incomingCallback) {\n      response.update_data.tipo_evento = incomingCallback;\n      response.text = `✅ Evento: ${incomingCallback}\\n\\n📅 ¿Cuál es la fecha del evento? (DD/MM/YYYY)`;\n      response.next_step = STEPS.CIUDAD;\n    } else {\n      // Si escribió texto, asumimos que es el tipo (fallback simple)\n      response.update_data.tipo_evento = incomingText;\n      response.text = `📅 ¿Cuál es la fecha del evento? (DD/MM/YYYY)`;\n      response.next_step = STEPS.CIUDAD;\n    }\n    break;\n\n  case STEPS.CIUDAD:\n    // Input anterior: FECHA\n    handleValidation(\n      Validators.fecha(incomingText), \n      incomingText, \n      STEPS.PAQUETE, \n      '📍 ¿En qué ciudad será el evento?',\n      'fecha_evento'  // <-- Campo donde guardar\n    );\n    break;\n\n  case STEPS.PAQUETE:\n    // Input anterior: CIUDAD\n    handleValidation(\n      Validators.ciudad(incomingText),\n      incomingText,\n      STEPS.NOMBRE,\n      '📦 Selecciona un paquete:',\n      'ubicacion_evento'  // <-- Campo donde guardar\n    );\n    if (response.next_step === STEPS.NOMBRE) {\n        response.buttons = OPTIONS.PAQUETE;\n    }\n    break;\n\n  case STEPS.NOMBRE:\n    // Input anterior: PAQUETE (Callback)\n    if (incomingCallback) {\n      response.update_data.paquete_interes = incomingCallback;\n      response.text = `✅ Paquete: ${incomingCallback}\\n\\n👤 ¿Cuál es tu nombre completo?`;\n      response.next_step = STEPS.EMAIL;\n    } else {\n      response.text = '⚠️ Por favor selecciona un paquete usando los botones.';\n      response.buttons = OPTIONS.PAQUETE;\n    }\n    break;\n\n  case STEPS.EMAIL:\n    // Input anterior: NOMBRE\n    handleValidation(\n      Validators.nombre(incomingText),\n      incomingText,\n      STEPS.TELEFONO,\n      '📧 ¿Cuál es tu correo electrónico?',\n      'nombre_cliente'  // <-- Campo donde guardar\n    );\n    break;\n\n  case STEPS.TELEFONO:\n    // Input anterior: EMAIL\n    handleValidation(\n      Validators.email(incomingText),\n      incomingText,\n      STEPS.CONFIRMACION,\n      '📞 ¿Cuál es tu número de teléfono?',\n      'email_cliente'  // <-- Campo donde guardar\n    );\n    break;\n\n  case STEPS.CONFIRMACION:\n    // Input anterior: TELEFONO\n    const validado = handleValidation(\n      Validators.telefono(incomingText),\n      incomingText,\n      STEPS.COMPLETADO,\n      '', // El mensaje se genera abajo\n      'telefono_cliente'  // <-- Campo donde guardar\n    );\n    \n    if (validado) {\n      const d = response.update_data;\n      const advertencia = d.revision_manual ? '\\n⚠️ **Nota:** Algunos datos requieren revisión manual.\\n' : '';\n      \n      const resumen = `\n📋 **RESUMEN DE SOLICITUD**\n${advertencia}\n👤 **Cliente:** ${d.nombre_cliente}\n📧 **Email:** ${d.email_cliente}\n📞 **Tel:** ${d.telefono_cliente}\n\n🎊 **Evento:** ${d.tipo_evento}\n📅 **Fecha:** ${d.fecha_evento}\n📍 **Lugar:** ${d.ubicacion_evento}\n📦 **Paquete:** ${d.paquete_interes}\n\n¿Todo correcto?\n      `;\n      response.text = resumen;\n      response.buttons = OPTIONS.CONFIRMACION;\n    }\n    break;\n\n  case STEPS.COMPLETADO:\n    if (incomingCallback === 'confirmar') {\n      // En lugar de enviar directo, pasamos a validación IA\n      response.text = '🔍 Validando tus datos...';\n      response.action = 'validate_with_ai';  // Nueva acción\n      response.next_step = STEPS.VALIDACION_IA;\n      response.update_data.origen = AI_CONFIG.ORIGEN;  // Marcar origen\n      response.update_data.intentos_validacion = 0;     // Iniciar contador\n    } else if (incomingCallback === 'cancelar') {\n      response.text = '🚫 Solicitud cancelada.';\n      response.action = 'cancel_session';\n    } else {\n      response.text = 'Por favor confirma o cancela usando los botones.';\n      response.buttons = OPTIONS.CONFIRMACION;\n    }\n    break;\n\n  case STEPS.VALIDACION_IA:\n    // Este paso maneja respuestas a preguntas de la IA sobre campos faltantes\n    const campoFaltante = currentData._campo_pendiente;\n    const intentos = parseInt(currentData.intentos_validacion || 0);\n    \n    if (campoFaltante && incomingText) {\n      // Guardamos la respuesta en el campo correspondiente\n      response.update_data[campoFaltante] = incomingText;\n      delete response.update_data._campo_pendiente;\n      \n      // Incrementar contador de intentos\n      response.update_data.intentos_validacion = intentos + 1;\n      \n      // Verificar límite de intentos\n      if (intentos + 1 >= AI_CONFIG.MAX_INTENTOS) {\n        response.text = '⚠️ Se alcanzó el límite de validaciones. Tu solicitud será revisada manualmente.';\n        response.action = 'send_to_error_support';  // Escalar a soporte\n        response.update_data.requiere_revision = true;\n        response.next_step = STEPS.START;\n      } else {\n        // Volver a validar con IA\n        response.text = '🔍 Verificando...';\n        response.action = 'validate_with_ai';\n        response.next_step = STEPS.VALIDACION_IA;\n      }\n    } else {\n      // No hay campo pendiente o no hay texto, continuar validación\n      response.action = 'validate_with_ai';\n      response.next_step = STEPS.VALIDACION_IA;\n    }\n    break;\n\n  default:\n    response.text = '⚠️ Error de estado. Escribe /start para reiniciar.';\n    response.next_step = STEPS.START;\n}\n\n// Validación de seguridad: nunca enviar texto vacío\nif (!response.text || response.text.trim() === '') {\n  response.text = '⚠️ Ocurrió un error. Por favor escribe /start para comenzar de nuevo.';\n}\n\nreturn response;\n"
       },
-      "id": "bot-logic",
-      "name": "Logica del Bot",
+      "id": "752cb366-84ff-49cc-9c15-56a6d61ea1c7",
+      "name": "logicaBot",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        900,
-        300
+        -128,
+        872
       ]
     },
     {
       "parameters": {
         "conditions": {
-          "string": [
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
             {
-              "value1": "={{ $json.action }}",
-              "operation": "equal",
-              "value2": "send_to_central"
-            },
-            {
-              "value1": "={{ $json.action }}",
-              "operation": "equal",
-              "value2": "cancel_session"
+              "id": "8ef278a3-d116-4d40-9327-c85debff0ba2",
+              "leftValue": "={{ $json.isEmpty() }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
             }
-          ]
-        }
-      },
-      "id": "router-action",
-      "name": "Router Accion",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 1,
-      "position": [
-        1120,
-        300
-      ]
-    },
-    {
-      "parameters": {
-        "operation": "update",
-        "sheetId": "YOUR_GOOGLE_SHEET_ID",
-        "range": "Sesiones_Telegram!A:E",
-        "key": "chat_id",
-        "value": "={{ $('Telegram Trigger').item.json.message.chat.id || $('Telegram Trigger').item.json.callback_query.message.chat.id }}",
-        "columns": {
-          "paso_actual": "={{ $json.next_step }}",
-          "datos_json": "={{ JSON.stringify($json.update_data) }}",
-          "ultima_interaccion": "={{ new Date().toISOString() }}",
-          "intentos_fallidos": "={{ $json.new_intentos }}"
+          ],
+          "combinator": "and"
         },
         "options": {}
       },
-      "id": "update-session",
-      "name": "Actualizar Sesion",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -576,
+        872
+      ],
+      "id": "e3195ef3-5f6e-421e-a368-60ff16dfd349",
+      "name": "esNuevoUsuario"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1RpFKNcF80lQgmt3k4-YTU0UJg9Vwih1_Gsd8tD66yuA",
+          "mode": "list",
+          "cachedResultName": "Sesiones_Telegram",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RpFKNcF80lQgmt3k4-YTU0UJg9Vwih1_Gsd8tD66yuA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hoja 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RpFKNcF80lQgmt3k4-YTU0UJg9Vwih1_Gsd8tD66yuA/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "chat_id": "={{ $('telegramTrigger').item.json.message?.chat?.id || $('telegramTrigger').item.json.callback_query?.message?.chat?.id }}",
+            "paso_actual": "={{ $('telegramTrigger').item.json.message.text }}",
+            "intentos_fallidos": "0",
+            "ultima_interaccion": "={{ new Date().toISOString() }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "chat_id",
+              "displayName": "chat_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "paso_actual",
+              "displayName": "paso_actual",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "datos_json",
+              "displayName": "datos_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ultima_interaccion",
+              "displayName": "ultima_interaccion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "intentos_fallidos",
+              "displayName": "intentos_fallidos",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "update_id",
+              "displayName": "update_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "callback_query",
+              "displayName": "callback_query",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "5d9fcdc4-5a8c-4c43-9df0-7eb4df2cda28",
+      "name": "crearSesion",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        1340,
-        100
+        -352,
+        800
       ],
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "YOUR_SHEETS_CREDENTIAL_ID",
-          "name": "Google Sheets Account"
+          "id": "pn9KPrV0bTFz3NPp",
+          "name": "Google Sheets account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.item.json;\nconst errores = [];\n\nif (!input.nombre_cliente || input.nombre_cliente.length < 3) {\n    errores.push(\"Nombre inválido\");\n}\nif (!input.email_cliente || !input.email_cliente.includes('@')) {\n    errores.push(\"Email inválido\");\n}\nif (!input.telefono_cliente || input.telefono_cliente.length < 10) {\n    errores.push(\"Teléfono inválido\");\n}\n\nreturn {\n    ...input,\n    datos_validos: errores.length === 0,\n    lista_errores: errores\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        288
+      ],
+      "id": "c9863eb1-14cd-4198-9296-a99f289a3ba2",
+      "name": "validarDatos"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ JSON.stringify($json.update_data) }}",
+        "options": {
+          "systemMessage": "=Eres un validador de datos para \"Live Moments\", un servicio de streaming profesional para eventos.\n\nTu tarea es validar que los datos de la solicitud estén completos y correctos.\n\nREGLAS DE VALIDACIÓN:\n1. tipo_evento: No debe estar vacío. Valores: \"Eventos sociales\", \"Conferencias y eventos corporativos\", \"E-Sport y Gaming\", \"Conciertos y Eventos Artísticos\", \"Eventos Religiosos\", \"Eventos Deportivos\"\n2. fecha_evento: Formato DD/MM/YYYY o YYYY-MM-DD, debe ser fecha futura\n3. ubicacion_evento: Mínimo 3 caracteres\n4. paquete_interes: Básico, Estándar, Premium o Enterprise\n5. nombre_cliente: Mínimo 3 caracteres\n6. email_cliente: Debe contener @ y dominio\n7. telefono_cliente: Debe contener al menos 7 dígitos\n\nINSTRUCCIONES:\n- Si TODO está bien, responde valido: true\n- Si FALTA algo, identifica EL PRIMER campo con problema\n- Genera una pregunta AMIGABLE para pedir ese dato\n\nRESPONDE ÚNICAMENTE EN JSON (sin markdown):\n{\"valido\": true/false, \"campo_faltante\": \"nombre\" o null, \"pregunta_usuario\": \"Pregunta\" o null, \"errores\": []}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        320,
+        184
+      ],
+      "id": "28171cad-33f2-4386-826e-58b11f0c3aa4",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        392,
+        408
+      ],
+      "id": "c691547d-d891-434b-bc03-e55d9bee30fd",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ZrCFnMmAvzAfyUkm",
+          "name": "Google Gemini(PaLM) Api account"
         }
       }
     },
     {
       "parameters": {
-        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id || $('Telegram Trigger').item.json.callback_query.message.chat.id }}",
-        "text": "={{ $json.text }}",
-        "additionalFields": {
-          "reply_markup": {
-            "inline_keyboard": "={{ $json.buttons ? [$json.buttons] : [] }}"
-          }
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "validate_with_ai",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "8d729915-72f7-4aa3-a7af-112659c5c84e"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "AI Agent"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "97bcbcbe-384b-4a80-8528-0028f2d541e0",
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "send_to_central",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Workflow Central"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "b2c5ec52-9ac3-4c76-bf0b-7b26bc4c46f1",
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "cancel_session",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Cancelar"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "750b6895-0193-4427-b01e-afaaec3c129e",
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "reply",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "HTTP Request Telegram"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "5fc7e0f3-82e5-4969-bd3a-f12a02ede853",
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "send_to_error_support",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Correo Error"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        96,
+        824
+      ],
+      "id": "2fdf6bc1-121b-4148-93cb-e92813637ca6",
+      "name": "switchAccion"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        384,
+        1160
+      ],
+      "id": "b53786a6-3d15-4d6a-b295-57753ab0ccaf",
+      "name": "correoErrorSoporte",
+      "webhookId": "28680382-0ce3-4bf5-a224-9fa59d3d99e4",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "DtUkw6u9qFGHi6uQ",
+          "name": "Gmail account"
         }
       },
-      "id": "send-telegram",
-      "name": "Responder Telegram",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1,
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.item.json;\nconst respuestaGemini = input.output || input.response || input.text || input;\nconst datosUsuario = $('logicaBot').first().json.update_data || {};\nconst origen = datosUsuario.origen || 'telegram';\n\n// Parsear respuesta de Gemini si es string\nlet validacion;\ntry {\n  validacion = typeof respuestaGemini === 'string' \n    ? JSON.parse(respuestaGemini.replace(/```json|```/g, '').trim())\n    : respuestaGemini;\n} catch (e) {\n  console.error('Error parseando respuesta de Gemini:', e);\n  // Fallback: asumir que hay error y escalar\n  validacion = {\n    valido: false,\n    campo_faltante: null,\n    pregunta_usuario: null,\n    errores: ['Error procesando validación de IA']\n  };\n}\n\n// Determinar acción\nlet action = 'send_to_central';\nlet next_step = 'completado';\nlet text = '🎉 ¡Excelente! Tu solicitud ha sido enviada.\\n\\nTe hemos enviado un correo de confirmación.';\n\nif (!validacion.valido) {\n  if (validacion.campo_faltante && validacion.pregunta_usuario) {\n    // Hay un campo faltante, preguntar al usuario\n    action = 'ask_field';\n    next_step = 'validacion_ia';\n    text = validacion.pregunta_usuario;\n    datosUsuario._campo_pendiente = validacion.campo_faltante;\n  } else {\n    // Error sin campo específico, escalar\n    action = 'send_to_error_support';\n    next_step = 'start';\n    text = '⚠️ Hubo un problema validando tus datos. Un representante te contactará pronto.';\n  }\n}\n\nreturn {\n  // Datos para el siguiente nodo\n  validacion_result: validacion,\n  action: action,\n  next_step: next_step,\n  text: text,\n  update_data: datosUsuario,\n  origen: origen,\n  \n  // Metadata\n  _debug: {\n    respuesta_gemini_raw: respuestaGemini,\n    timestamp: new Date().toISOString()\n  }\n};\n\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [
-        1560,
-        300
+        672,
+        288
       ],
-      "credentials": {
-        "telegramApi": {
-          "id": "YOUR_TELEGRAM_CREDENTIAL_ID",
-          "name": "Telegram Live Moments"
-        }
-      }
+      "id": "dde57311-1bf9-4040-af0f-348f840fbefe",
+      "name": "geminiValidador"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.action}}",
+                    "rightValue": "send_to_central",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "74df0a83-c9da-4bd7-a7fe-4024d6e33724"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "send_to_central"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "6cacbeec-0ccf-491f-99c5-16622a822d86",
+                    "leftValue": "={{$json.action}}",
+                    "rightValue": "ask_field",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "ask_field"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "8b30fb6c-802e-4852-b8fb-cdd6dbf308bf",
+                    "leftValue": "={{$json.action}}",
+                    "rightValue": "send_to_error_support",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "send_to_error_support"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        1120,
+        272
+      ],
+      "id": "b09cceb1-6a59-49ea-a028-20513551dd76",
+      "name": "switchValidacion"
     },
     {
       "parameters": {
         "workflowId": "ID_DEL_WORKFLOW_CENTRAL",
-        "mode": "each"
+        "mode": "each",
+        "options": {}
       },
-      "id": "call-central",
-      "name": "Llamar Workflow Central",
+      "id": "df497c90-0a10-4c09-bb2a-d033237cb5f3",
+      "name": "Llamar Workflow Central1",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1,
       "position": [
-        1340,
-        500
+        1344,
+        96
       ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.telegram.org/bot8450594238:AAHSw3lVD_SKbHhJavglYKsd0WKptmsulV0/sendMessage",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\n  (() => {\n    const buttons =  $('switchAccion').item.json.buttons;\n    \n    // Objeto base\n    const body = {\n      \"chat_id\": $('telegramTrigger').item.json.message?.chat?.id || $('telegramTrigger').item.json.callback_query?.message?.chat?.id,\n      \"text\": $('switchAccion').item.json.text\n    };\n\n    // Solo agregar reply_markup si hay botones válidos\n    if (buttons && Array.isArray(buttons) && buttons.length > 0) {\n      body.reply_markup = {\n        \"inline_keyboard\": buttons\n      };\n    }\n\n    return body;\n  })()\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1344,
+        288
+      ],
+      "id": "47944676-de96-4cc4-bdb4-758fef116914",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1RpFKNcF80lQgmt3k4-YTU0UJg9Vwih1_Gsd8tD66yuA",
+          "mode": "list",
+          "cachedResultName": "Sesiones_Telegram",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RpFKNcF80lQgmt3k4-YTU0UJg9Vwih1_Gsd8tD66yuA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hoja 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RpFKNcF80lQgmt3k4-YTU0UJg9Vwih1_Gsd8tD66yuA/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "chat_id": "={{ $('telegramTrigger').item.json.message?.chat?.id || $('telegramTrigger').item.json.callback_query?.message?.chat?.id }}",
+            "paso_actual": "={{ $('switchAccion').item.json.next_step }}",
+            "datos_json": "={{ JSON.stringify($('switchAccion').item.json.update_data) }}",
+            "ultima_interaccion": "={{ new Date().toISOString() }}",
+            "intentos_fallidos": "={{ $json.new_intentos }}"
+          },
+          "matchingColumns": [
+            "chat_id"
+          ],
+          "schema": [
+            {
+              "id": "chat_id",
+              "displayName": "chat_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "paso_actual",
+              "displayName": "paso_actual",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "datos_json",
+              "displayName": "datos_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ultima_interaccion",
+              "displayName": "ultima_interaccion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "intentos_fallidos",
+              "displayName": "intentos_fallidos",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "update_id",
+              "displayName": "update_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "callback_query",
+              "displayName": "callback_query",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "0230138a-57bd-4899-959b-27d59a6fe94a",
+      "name": "actualizarSesion",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        384,
+        968
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "pn9KPrV0bTFz3NPp",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1RpFKNcF80lQgmt3k4-YTU0UJg9Vwih1_Gsd8tD66yuA",
+          "mode": "list",
+          "cachedResultName": "Sesiones_Telegram",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RpFKNcF80lQgmt3k4-YTU0UJg9Vwih1_Gsd8tD66yuA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hoja 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RpFKNcF80lQgmt3k4-YTU0UJg9Vwih1_Gsd8tD66yuA/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "chat_id": "={{ $('telegramTrigger').item.json.message?.chat?.id || $('telegramTrigger').item.json.callback_query?.message?.chat?.id }}",
+            "paso_actual": "={{ $('switchAccion').item.json.next_step }}",
+            "datos_json": "={{ JSON.stringify($('switchAccion').item.json.update_data) }}",
+            "ultima_interaccion": "={{ new Date().toISOString() }}",
+            "intentos_fallidos": "={{ $json.new_intentos }}"
+          },
+          "matchingColumns": [
+            "chat_id"
+          ],
+          "schema": [
+            {
+              "id": "chat_id",
+              "displayName": "chat_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "paso_actual",
+              "displayName": "paso_actual",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "datos_json",
+              "displayName": "datos_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ultima_interaccion",
+              "displayName": "ultima_interaccion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "intentos_fallidos",
+              "displayName": "intentos_fallidos",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "update_id",
+              "displayName": "update_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "callback_query",
+              "displayName": "callback_query",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "953f5a27-8bc1-4b0a-b54e-e0df984437ff",
+      "name": "actualizarSesion1",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        1344,
+        480
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "pn9KPrV0bTFz3NPp",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1344,
+        672
+      ],
+      "id": "ac9b1e45-2d33-4da0-a7f8-c137046df191",
+      "name": "correoErrorSoporte1",
+      "webhookId": "28680382-0ce3-4bf5-a224-9fa59d3d99e4",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "DtUkw6u9qFGHi6uQ",
+          "name": "Gmail account"
+        }
+      },
+      "disabled": true
     }
   ],
+  "pinData": {},
   "connections": {
-    "Telegram Trigger": {
+    "Llamar Workflow Central": {
+      "main": [
+        []
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        []
+      ]
+    },
+    "telegramTrigger": {
       "main": [
         [
           {
-            "node": "Buscar Sesion",
+            "node": "buscarSesion",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Buscar Sesion": {
+    "buscarSesion": {
       "main": [
         [
           {
-            "node": "Logica del Bot",
+            "node": "esNuevoUsuario",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Logica del Bot": {
+    "logicaBot": {
       "main": [
         [
           {
-            "node": "Router Accion",
+            "node": "switchAccion",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Router Accion": {
+    "esNuevoUsuario": {
       "main": [
+        [
+          {
+            "node": "crearSesion",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "logicaBot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "crearSesion": {
+      "main": [
+        [
+          {
+            "node": "logicaBot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "validarDatos": {
+      "main": [
+        [
+          {
+            "node": "switchValidacion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "switchAccion": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
         [
           {
             "node": "Llamar Workflow Central",
@@ -201,36 +1006,90 @@
             "index": 0
           }
         ],
+        [],
         [
           {
-            "node": "Actualizar Sesion",
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "actualizarSesion",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "correoErrorSoporte",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Actualizar Sesion": {
+    "AI Agent": {
       "main": [
         [
           {
-            "node": "Responder Telegram",
+            "node": "geminiValidador",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Llamar Workflow Central": {
+    "geminiValidador": {
       "main": [
         [
           {
-            "node": "Responder Telegram",
+            "node": "validarDatos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "switchValidacion": {
+      "main": [
+        [
+          {
+            "node": "Llamar Workflow Central1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "actualizarSesion1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "correoErrorSoporte1",
             "type": "main",
             "index": 0
           }
         ]
       ]
     }
-  }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "7aa765f3-ccd9-440b-a6d6-780ea5b0be05",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8db62e2bea7e0e9ff91c93d0f536bbe0241ad88a0b3e2e28d80d2ab1809fb308"
+  },
+  "id": "h3qgXsRIimDe9jHh",
+  "tags": []
 }

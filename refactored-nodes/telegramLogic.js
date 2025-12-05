@@ -33,7 +33,23 @@ const STEPS = {
   EMAIL: 'email',
   TELEFONO: 'telefono',
   CONFIRMACION: 'confirmacion',
+  VALIDACION_IA: 'validacion_ia',  // Nuevo: validación con Gemini
   COMPLETADO: 'completado'
+};
+
+// Configuración del AI Validator
+const AI_CONFIG = {
+  MAX_INTENTOS: 4,
+  ORIGEN: 'telegram',  // Identificador del canal
+  CAMPOS_REQUERIDOS: [
+    'tipo_evento',
+    'fecha_evento',
+    'ubicacion_evento',
+    'paquete_interes',
+    'nombre_cliente',
+    'email_cliente',
+    'telefono_cliente'
+  ]
 };
 
 const OPTIONS = {
@@ -183,15 +199,11 @@ let response = {
 };
 
 // Función helper para manejar validación con fallback
-function handleValidation(validatorResult, rawText, successNextStep, successMessage) {
+// fieldName: nombre del campo donde guardar el dato (ej: 'fecha_evento', 'nombre_cliente')
+function handleValidation(validatorResult, rawText, successNextStep, successMessage, fieldName) {
   if (validatorResult.valid) {
     // Éxito: Guardamos dato limpio y avanzamos
-    response.update_data[currentStep] = validatorResult.value; // Usamos el nombre del paso como key (ej: 'fecha')
-    if (currentStep === STEPS.FECHA) response.update_data.fecha_evento = validatorResult.value;
-    if (currentStep === STEPS.CIUDAD) response.update_data.ubicacion_evento = validatorResult.value;
-    if (currentStep === STEPS.NOMBRE) response.update_data.nombre_cliente = validatorResult.value;
-    if (currentStep === STEPS.EMAIL) response.update_data.email_cliente = validatorResult.value;
-    if (currentStep === STEPS.TELEFONO) response.update_data.telefono_cliente = validatorResult.value;
+    response.update_data[fieldName] = validatorResult.value;
     
     response.text = successMessage;
     response.next_step = successNextStep;
@@ -201,17 +213,9 @@ function handleValidation(validatorResult, rawText, successNextStep, successMess
     // Error
     if (intentos >= 1) {
       // FALLBACK: Segundo error, aceptamos el dato tal cual
-      response.update_data[currentStep] = rawText; // Guardamos lo que escribió
-      
-      // Mapeo manual de campos específicos
-      if (currentStep === STEPS.FECHA) response.update_data.fecha_evento = rawText;
-      if (currentStep === STEPS.CIUDAD) response.update_data.ubicacion_evento = rawText;
-      if (currentStep === STEPS.NOMBRE) response.update_data.nombre_cliente = rawText;
-      if (currentStep === STEPS.EMAIL) response.update_data.email_cliente = rawText;
-      if (currentStep === STEPS.TELEFONO) response.update_data.telefono_cliente = rawText;
-
+      response.update_data[fieldName] = rawText;
       response.update_data.revision_manual = true; // Flag para ventas
-      response.update_data[`error_${currentStep}`] = validatorResult.error; // Guardamos qué falló
+      response.update_data[`error_${fieldName}`] = validatorResult.error;
       
       response.text = `⚠️ No pude validar este dato, pero lo anoté tal cual para que un humano lo revise.\n\nContinuemos... ${successMessage}`;
       response.next_step = successNextStep;
@@ -273,7 +277,8 @@ switch (currentStep) {
       Validators.fecha(incomingText), 
       incomingText, 
       STEPS.PAQUETE, 
-      '📍 ¿En qué ciudad será el evento?'
+      '📍 ¿En qué ciudad será el evento?',
+      'fecha_evento'  // <-- Campo donde guardar
     );
     break;
 
@@ -283,7 +288,8 @@ switch (currentStep) {
       Validators.ciudad(incomingText),
       incomingText,
       STEPS.NOMBRE,
-      '📦 Selecciona un paquete:'
+      '📦 Selecciona un paquete:',
+      'ubicacion_evento'  // <-- Campo donde guardar
     );
     if (response.next_step === STEPS.NOMBRE) {
         response.buttons = OPTIONS.PAQUETE;
@@ -308,7 +314,8 @@ switch (currentStep) {
       Validators.nombre(incomingText),
       incomingText,
       STEPS.TELEFONO,
-      '📧 ¿Cuál es tu correo electrónico?'
+      '📧 ¿Cuál es tu correo electrónico?',
+      'nombre_cliente'  // <-- Campo donde guardar
     );
     break;
 
@@ -318,7 +325,8 @@ switch (currentStep) {
       Validators.email(incomingText),
       incomingText,
       STEPS.CONFIRMACION,
-      '📞 ¿Cuál es tu número de teléfono?'
+      '📞 ¿Cuál es tu número de teléfono?',
+      'email_cliente'  // <-- Campo donde guardar
     );
     break;
 
@@ -328,7 +336,8 @@ switch (currentStep) {
       Validators.telefono(incomingText),
       incomingText,
       STEPS.COMPLETADO,
-      '' // El mensaje se genera abajo
+      '', // El mensaje se genera abajo
+      'telefono_cliente'  // <-- Campo donde guardar
     );
     
     if (validado) {
@@ -356,15 +365,50 @@ ${advertencia}
 
   case STEPS.COMPLETADO:
     if (incomingCallback === 'confirmar') {
-      response.text = '🎉 ¡Excelente! Tu solicitud ha sido enviada.\n\nTe hemos enviado un correo de confirmación.';
-      response.action = 'send_to_central';
-      response.next_step = STEPS.START;
+      // En lugar de enviar directo, pasamos a validación IA
+      response.text = '🔍 Validando tus datos...';
+      response.action = 'validate_with_ai';  // Nueva acción
+      response.next_step = STEPS.VALIDACION_IA;
+      response.update_data.origen = AI_CONFIG.ORIGEN;  // Marcar origen
+      response.update_data.intentos_validacion = 0;     // Iniciar contador
     } else if (incomingCallback === 'cancelar') {
       response.text = '🚫 Solicitud cancelada.';
       response.action = 'cancel_session';
     } else {
       response.text = 'Por favor confirma o cancela usando los botones.';
       response.buttons = OPTIONS.CONFIRMACION;
+    }
+    break;
+
+  case STEPS.VALIDACION_IA:
+    // Este paso maneja respuestas a preguntas de la IA sobre campos faltantes
+    const campoFaltante = currentData._campo_pendiente;
+    const intentos = parseInt(currentData.intentos_validacion || 0);
+    
+    if (campoFaltante && incomingText) {
+      // Guardamos la respuesta en el campo correspondiente
+      response.update_data[campoFaltante] = incomingText;
+      delete response.update_data._campo_pendiente;
+      
+      // Incrementar contador de intentos
+      response.update_data.intentos_validacion = intentos + 1;
+      
+      // Verificar límite de intentos
+      if (intentos + 1 >= AI_CONFIG.MAX_INTENTOS) {
+        response.text = '⚠️ Se alcanzó el límite de validaciones. Tu solicitud será revisada manualmente.';
+        response.action = 'send_to_error_support';  // Escalar a soporte
+        response.update_data.requiere_revision = true;
+        response.next_step = STEPS.START;
+      } else {
+        // Volver a validar con IA
+        response.text = '🔍 Verificando...';
+        response.action = 'validate_with_ai';
+        response.next_step = STEPS.VALIDACION_IA;
+      }
+    } else {
+      // No hay campo pendiente o no hay texto, continuar validación
+      response.action = 'validate_with_ai';
+      response.next_step = STEPS.VALIDACION_IA;
     }
     break;
 
