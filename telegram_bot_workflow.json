@@ -13,7 +13,7 @@
       "typeVersion": 1,
       "position": [
         384,
-        584
+        592
       ]
     },
     {
@@ -29,7 +29,7 @@
       "typeVersion": 4.3,
       "position": [
         384,
-        776
+        784
       ],
       "id": "8b34a686-f60e-49a8-a42e-cb7d74059784",
       "name": "HTTP Request"
@@ -91,7 +91,7 @@
       "typeVersion": 4,
       "position": [
         -800,
-        872
+        880
       ],
       "alwaysOutputData": true,
       "credentials": {
@@ -112,7 +112,7 @@
       "typeVersion": 2,
       "position": [
         -128,
-        872
+        880
       ]
     },
     {
@@ -144,7 +144,7 @@
       "typeVersion": 2.2,
       "position": [
         -576,
-        872
+        880
       ],
       "id": "e3195ef3-5f6e-421e-a368-60ff16dfd349",
       "name": "esNuevoUsuario"
@@ -295,7 +295,7 @@
       "typeVersion": 3,
       "position": [
         320,
-        184
+        192
       ],
       "id": "28171cad-33f2-4386-826e-58b11f0c3aa4",
       "name": "AI Agent"
@@ -307,8 +307,8 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
       "typeVersion": 1,
       "position": [
-        392,
-        408
+        400,
+        416
       ],
       "id": "c691547d-d891-434b-bc03-e55d9bee30fd",
       "name": "Google Gemini Chat Model",
@@ -455,7 +455,7 @@
       "typeVersion": 3.3,
       "position": [
         96,
-        824
+        832
       ],
       "id": "2fdf6bc1-121b-4148-93cb-e92813637ca6",
       "name": "switchAccion"
@@ -468,7 +468,7 @@
       "typeVersion": 2.1,
       "position": [
         384,
-        1160
+        1168
       ],
       "id": "b53786a6-3d15-4d6a-b295-57753ab0ccaf",
       "name": "correoErrorSoporte",
@@ -606,7 +606,7 @@
         "url": "https://api.telegram.org/bot8450594238:AAHSw3lVD_SKbHhJavglYKsd0WKptmsulV0/sendMessage",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{\n  (() => {\n    const buttons =  $('switchAccion').item.json.buttons;\n    \n    // Objeto base\n    const body = {\n      \"chat_id\": $('telegramTrigger').item.json.message?.chat?.id || $('telegramTrigger').item.json.callback_query?.message?.chat?.id,\n      \"text\": $('switchAccion').item.json.text\n    };\n\n    // Solo agregar reply_markup si hay botones válidos\n    if (buttons && Array.isArray(buttons) && buttons.length > 0) {\n      body.reply_markup = {\n        \"inline_keyboard\": buttons\n      };\n    }\n\n    return body;\n  })()\n}}",
+        "jsonBody": "={{\n  (() => {\n    const buttons =  $('switchAccion').item.json.buttons;\n    \n    // Objeto base\n    const body = {\n      \"chat_id\": $('telegramTrigger').item.json.message?.chat?.id || $('telegramTrigger').item.json.callback_query?.message?.chat?.id,\n      \"text\": $json.text\n    };\n\n    // Solo agregar reply_markup si hay botones válidos\n    if (buttons && Array.isArray(buttons) && buttons.length > 0) {\n      body.reply_markup = {\n        \"inline_keyboard\": buttons\n      };\n    }\n\n    return body;\n  })()\n}}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
@@ -736,7 +736,7 @@
       "typeVersion": 4,
       "position": [
         384,
-        968
+        976
       ],
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -1081,11 +1081,11 @@
       ]
     }
   },
-  "active": true,
+  "active": false,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "7aa765f3-ccd9-440b-a6d6-780ea5b0be05",
+  "versionId": "d926d6ed-bfd0-4899-abeb-2f088bdff346",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "8db62e2bea7e0e9ff91c93d0f536bbe0241ad88a0b3e2e28d80d2ab1809fb308"

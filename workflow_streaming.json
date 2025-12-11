@@ -11,8 +11,8 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -1296,
-        208
+        -1440,
+        576
       ],
       "id": "44851bcb-47df-4972-8f71-ed7276776be0",
       "name": "Webhook",
@@ -27,8 +27,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        -864,
-        112
+        -992,
+        624
       ],
       "id": "612d1e46-9991-46d5-a1f7-1762cd794ea5",
       "name": "fomularioWeb",
@@ -41,8 +41,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -864,
-        304
+        -992,
+        -80
       ],
       "id": "d56ee1e1-7191-4bea-a19b-59b6578ac235",
       "name": "calcularDias"
@@ -54,58 +54,24 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -640,
-        304
+        -768,
+        -80
       ],
       "id": "23ef9cd6-c125-438c-8f71-f19efa91d275",
       "name": "clasificarUrgencia"
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.item.json;\nconst errores = [];\n\nif (!input.nombre_cliente || input.nombre_cliente.length < 3) {\n    errores.push(\"Nombre inválido\");\n}\nif (!input.email_cliente || !input.email_cliente.includes('@')) {\n    errores.push(\"Email inválido\");\n}\nif (!input.telefono_cliente || input.telefono_cliente.length < 10) {\n    errores.push(\"Teléfono inválido\");\n}\n\nreturn {\n    ...input,\n    datos_validos: errores.length === 0,\n    lista_errores: errores\n};"
+        "jsCode": "/**\n * ============================================\n * NODO: validarDatos\n * ============================================\n * \n * PROPÓSITO:\n * Transforma los datos recolectados por el bot de Telegram al formato\n * esperado por el flujo central (webhook), asegurando compatibilidad.\n * \n * INPUT (desde routerAccion):\n * - update_data: Objeto con los datos recolectados por el bot\n *   - tipo_evento: string\n *   - fecha_evento: string (formato DD/MM/YYYY)\n *   - ubicacion_evento: string\n *   - paquete_interes: string\n *   - nombre_cliente: string\n *   - email_cliente: string\n *   - telefono_cliente: string\n * \n * OUTPUT:\n * - Objeto compatible con el webhook del flujo central\n */\n\n// ============================================\n// CONFIGURACIÓN\n// ============================================\n\nconst CONFIG = {\n  TIMEZONE: 'America/Caracas',\n  // ORIGEN ahora se determina dinámicamente\n  ORIGENES_VALIDOS: ['telegram', 'whatsapp', 'webhook'],\n  CAMPOS_REQUERIDOS: [\n    'tipo_evento',\n    'fecha_evento',\n    'ubicacion_evento',\n    'paquete_interes',\n    'nombre_cliente',\n    'email_cliente',\n    'telefono_cliente'\n  ],\n  // Valores por defecto para campos opcionales\n  DEFAULTS: {\n    duracion_estimada: 'Por confirmar',\n    tiene_internet_venue: 'No estoy seguro',\n    comentarios_adicionales: 'Solicitud desde Telegram Bot',\n    add_ons_solicitados: []\n  }\n};\n\n// ============================================\n// FUNCIONES AUXILIARES\n// ============================================\n\n/**\n * Convierte fecha de DD/MM/YYYY a YYYY-MM-DD\n * @param {string} fechaDDMMYYYY - Fecha en formato DD/MM/YYYY\n * @returns {string} Fecha en formato YYYY-MM-DD\n */\nfunction convertirFecha(fechaDDMMYYYY) {\n  if (!fechaDDMMYYYY) return null;\n  \n  // Si ya está en formato YYYY-MM-DD, retornar tal cual\n  if (/^\\d{4}-\\d{2}-\\d{2}$/.test(fechaDDMMYYYY)) {\n    return fechaDDMMYYYY;\n  }\n  \n  // Convertir DD/MM/YYYY a YYYY-MM-DD\n  const partes = fechaDDMMYYYY.split('/');\n  if (partes.length === 3) {\n    const [dia, mes, anio] = partes;\n    return `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;\n  }\n  \n  return fechaDDMMYYYY; // Retornar original si no se puede convertir\n}\n\n/**\n * Valida que los campos requeridos existan\n * @param {Object} datos - Datos a validar\n * @returns {Object} {valido: boolean, faltantes: string[]}\n */\nfunction validarCamposRequeridos(datos) {\n  const faltantes = CONFIG.CAMPOS_REQUERIDOS.filter(\n    campo => !datos[campo] || datos[campo] === 'undefined'\n  );\n  \n  return {\n    valido: faltantes.length === 0,\n    faltantes\n  };\n}\n\n/**\n * Limpia valores undefined o null\n * @param {*} valor - Valor a limpiar\n * @param {*} valorDefault - Valor por defecto si es undefined/null\n * @returns {*} Valor limpio\n */\nfunction limpiarValor(valor, valorDefault = '') {\n  if (valor === undefined || valor === null || valor === 'undefined') {\n    return valorDefault;\n  }\n  return valor;\n}\n\n// ============================================\n// LÓGICA PRINCIPAL\n// ============================================\n\n// Obtener datos del input\nconst input = $input.item.json;\nconst datosBot = input.update_data || input;\nconst chatId = input.chat_id || $('telegramTrigger').first().json.message?.chat?.id || \n               $('telegramTrigger').first().json.callback_query?.message?.chat?.id;\n\n// Validar campos requeridos\nconst validacion = validarCamposRequeridos(datosBot);\n\nif (!validacion.valido) {\n  console.warn('⚠️ Campos faltantes:', validacion.faltantes.join(', '));\n}\n\n// Construir payload compatible con webhook\nconst payloadWebhook = {\n  // Campos principales (del bot)\n  tipo_evento: limpiarValor(datosBot.tipo_evento),\n  fecha_evento: convertirFecha(datosBot.fecha_evento),\n  ubicacion_evento: limpiarValor(datosBot.ubicacion_evento),\n  paquete_interes: limpiarValor(datosBot.paquete_interes),\n  nombre_cliente: limpiarValor(datosBot.nombre_cliente),\n  email_cliente: limpiarValor(datosBot.email_cliente),\n  telefono_cliente: limpiarValor(datosBot.telefono_cliente),\n  \n  // Campos con valores por defecto\n  duracion_estimada: limpiarValor(datosBot.duracion_estimada, CONFIG.DEFAULTS.duracion_estimada),\n  tiene_internet_venue: limpiarValor(datosBot.tiene_internet_venue, CONFIG.DEFAULTS.tiene_internet_venue),\n  comentarios_adicionales: limpiarValor(datosBot.comentarios_adicionales, CONFIG.DEFAULTS.comentarios_adicionales),\n  add_ons_solicitados: datosBot.add_ons_solicitados || CONFIG.DEFAULTS.add_ons_solicitados,\n  \n  // Metadatos de origen (dinámico según el canal)\n  origen: datosBot.origen || 'telegram',  // telegram | whatsapp | webhook\n  chat_id: chatId,\n  timestamp: new Date().toISOString(),\n  \n  // Flag de validación\n  datos_completos: validacion.valido,\n  campos_faltantes: validacion.faltantes,\n  requiere_revision: datosBot.revision_manual || !validacion.valido\n};\n\n// Logging para debugging\nconsole.log('📤 Payload transformado para flujo central:');\nconsole.log(JSON.stringify(payloadWebhook, null, 2));\n\nreturn payloadWebhook;\n\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -416,
-        304
+        -544,
+        -80
       ],
       "id": "3487ee89-d65a-4880-8f07-acb190a756d1",
       "name": "validarDatos"
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 2
-          },
-          "conditions": [
-            {
-              "id": "502d5d42-25d0-4016-ae92-661472df7432",
-              "leftValue": "={{ $('validarDatos').item.json.datos_validos }}",
-              "rightValue": "",
-              "operator": {
-                "type": "boolean",
-                "operation": "true",
-                "singleValue": true
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [
-        32,
-        304
-      ],
-      "id": "34cdb93a-11b1-47e3-9c30-436f13326fa7",
-      "name": "validarDatos2"
     },
     {
       "parameters": {
@@ -116,8 +82,8 @@
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        -1120,
-        32
+        -1232,
+        560
       ],
       "typeVersion": 1,
       "id": "5c53e452-3f21-4339-a3fb-1dd729c2a954",
@@ -131,8 +97,8 @@
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        -1120,
-        256
+        -1264,
+        -128
       ],
       "typeVersion": 1,
       "id": "e1aea40d-a5ba-421f-8c64-161a7e1b6d62",
@@ -147,8 +113,8 @@
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        64,
-        416
+        160,
+        256
       ],
       "typeVersion": 1,
       "id": "83367c48-c634-40fa-ad5c-1b45934c7d4c",
@@ -163,8 +129,8 @@
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        0,
-        0
+        80,
+        -224
       ],
       "typeVersion": 1,
       "id": "7124793a-7b47-44d2-ae36-6fcbf01aa7e0",
@@ -179,8 +145,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -192,
-        304
+        -320,
+        -80
       ],
       "id": "2172182b-2cb4-45ad-a107-1a5aed38391d",
       "name": "formularioValido"
@@ -367,8 +333,8 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        720,
-        496
+        480,
+        304
       ],
       "id": "32ceaf8c-7e13-4a52-a5c3-5098dd183aaa",
       "name": "registroErrores",
@@ -388,8 +354,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        944,
-        496
+        704,
+        304
       ],
       "id": "a2fcc190-4bb3-457a-90f1-f56257482359",
       "name": "responderCode400"
@@ -401,8 +367,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1168,
-        48
+        928,
+        -208
       ],
       "id": "c7f53bfd-32a7-4ae0-a4d6-224a0cc273d4",
       "name": "procesarRespuesta"
@@ -417,8 +383,8 @@
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
       "position": [
-        384,
-        496
+        192,
+        304
       ],
       "id": "cd1c288d-6705-46d8-bffc-9f86fe9102a0",
       "name": "correoErrorSoporte",
@@ -440,8 +406,8 @@
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
       "position": [
-        1392,
-        144
+        1152,
+        -112
       ],
       "id": "ee65ba3c-283b-49e7-ac7c-7ecb894eb9f8",
       "name": "correoConfirmacionCliente",
@@ -652,8 +618,8 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        1616,
-        144
+        1376,
+        -112
       ],
       "id": "a857732e-e277-411d-bdd4-050232456822",
       "name": "resgitroExitoso",
@@ -675,8 +641,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        2048,
-        144
+        1824,
+        -112
       ],
       "id": "f4dbd2f8-d3ee-4b49-aad7-f90cb870903b",
       "name": "responderCode200"
@@ -698,8 +664,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        944,
-        240
+        704,
+        -16
       ],
       "id": "7937bff2-9336-4c1b-a527-8ed7436bbdb0",
       "name": "setEmailGenérico"
@@ -711,8 +677,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1168,
-        240
+        928,
+        -16
       ],
       "id": "864c6817-a1e3-4391-97b8-267daf1911a1",
       "name": "procesarEmailGenerico"
@@ -745,8 +711,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        672,
-        176
+        480,
+        -112
       ],
       "id": "f1c3464c-cd6e-4701-830b-16d091595725",
       "name": "¿IA Exitosa?"
@@ -774,30 +740,11 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -1088,
-        112
+        -1216,
+        624
       ],
       "id": "dfa809d0-2b50-44d7-917d-778a3be0b0d1",
       "name": "Configuracion"
-    },
-    {
-      "parameters": {
-        "promptType": "define",
-        "text": "=Genera un correo de confirmación personalizado para este cliente:\nDATOS DEL CLIENTE:\n- Nombre: {{ $json.nombre_cliente }}\n- Email: {{ $json.email_cliente }}\n- Teléfono: {{ $json.telefono_cliente }}\nDATOS DEL EVENTO:\n- Tipo: {{ $json.tipo_evento }}\n- Fecha: {{ $json.fecha_evento }}\n- Ubicación: {{ $json.ubicacion_evento }}\n- Duración: {{ $json.duracion_estimada }}\n- Internet en venue: {{ $json.tiene_internet_venue }}\nSOLICITUD:\n- Paquete seleccionado: {{ $json.paquete_interes }}\n- Add-ons solicitados: {{ $json.add_ons_solicitados ? $json.add_ons_solicitados.join(', ') : 'Ninguno' }}\n- Días hasta el evento: {{ $json.dias_del_evento }}\nINSTRUCCIONES:\n1. Usa el tono apropiado según el tipo de evento\n2. Confirma la recepción de la solicitud mencionando tipo de evento y fecha\n3. Proporciona recomendaciones sobre:\n   a) Validación o mejora del paquete seleccionado (si aplica)\n   b) Add-ons relevantes que NO hayan sido seleccionados\n   c) Consideraciones especiales:\n      - Si el evento es en menos de 15 días: mencionar urgencia\n      - Si no hay internet: recomendar solución (Starlink)\n      - Si duración >6 horas: sugerir equipo de respaldo\n4. Indica próximos pasos:\n   - Contacto del asesor en 24-48 horas\n   - Envío de cotización personalizada\n   - Videollamada de asesoría (si evento complejo)\n5. Despedida acorde al tono\nDevuelve SOLO el JSON, sin texto adicional.",
-        "hasOutputParser": true,
-        "options": {
-          "systemMessage": "Eres un asistente de ventas experto en servicios de streaming profesional multicámara para eventos en vivo. Tu empresa se llama \"Live Moments\".\nTU ROL:\n- Generar correos de confirmación personalizados para clientes\n- Adaptar el tono según el tipo de evento\n- Proporcionar recomendaciones relevantes y útiles\n- Ser profesional pero cercano\nTONOS QUE DEBES USAR:\n1. FORMAL (para Eventos Religiosos y Conferencias/Corporativos):\n   - Vocabulario: ceremonias, servicios, presentaciones, audiencia\n   - Saludo: \"Estimado/a [Nombre]\"\n   - Despedida: \"Quedamos atentos. Saludos cordiales,\"\n   - Evitar: emojis excesivos, jerga informal\n2. ENTUSIASTA (para E-Sport/Gaming y Eventos Deportivos):\n   - Vocabulario: acción, jugadas, competencia, fans, emoción\n   - Saludo: \"¡Hola [Nombre]! 🎮\" o \"¡Hola [Nombre]! ⚽\"\n   - Despedida: \"¡Nos vemos en la transmisión! 🔥\"\n   - Usar: emojis relacionados (🎮 🏆 ⚡ 🔥 ⚽ 🏀)\n3. AMIGABLE (para Eventos Sociales):\n   - Vocabulario: celebración, momentos especiales, familia, amigos\n   - Saludo: \"Hola [Nombre], ¡qué emoción! 💝\"\n   - Despedida: \"¡Estamos ansiosos por ser parte de tu celebración! ✨\"\n   - Usar: emojis emotivos (💝 🎉 ✨ 🌟)\nPAQUETES DISPONIBLES:\n- Básico: 1 cámara HD, 1 micrófono, streaming a 1 plataforma\n- Estándar: 2 cámaras HD, 2 micrófonos, overlays básicos\n- Premium: 3 cámaras HD, 3 micrófonos profesionales, overlays avanzados, director técnico\n- Enterprise: 4 cámaras 4K, 4 micrófonos, streaming a 3 plataformas, branding personalizado\nADD-ONS DISPONIBLES:\n- Cámaras y Micrófonos adicionales\n- Internet Starlink (Garantía de conectividad)\n- Overlays Personalizados (Branding)\n- Plataforma Adicional (Multi-streaming)\n- Grabación (Archivo permanente)\nREGLAS IMPORTANTES:\n- NO inventes datos que no tienes\n- NO prometas precios específicos\n- NO garantices disponibilidad sin confirmar\n- SÍ sé honesto sobre limitaciones\n- SÍ proporciona valor en cada recomendación\nFORMATO DE SALIDA:\nDebes devolver ÚNICAMENTE un objeto JSON válido con esta estructura exacta:\n{\n  \"asunto\": \"Asunto del correo\",\n  \"saludo\": \"Saludo personalizado\",\n  \"parrafo_confirmacion\": \"Confirmación de recepción\",\n  \"recomendaciones\": {\n    \"paquete\": \"Recomendación sobre paquete o null\",\n    \"addons\": [\"addon1\", \"addon2\"] o [],\n    \"consideraciones\": \"Consideraciones especiales o null\"\n  },\n  \"proximos_pasos\": [\"paso1\", \"paso2\", \"paso3\"],\n  \"despedida\": \"Despedida personalizada\",\n  \"tono_detectado\": \"formal|entusiasta|amigable\"\n}"
-        }
-      },
-      "type": "@n8n/n8n-nodes-langchain.agent",
-      "typeVersion": 3,
-      "position": [
-        256,
-        32
-      ],
-      "id": "fc0c34f1-d591-4b42-bd44-d7b5205529dc",
-      "name": "AI Agent1",
-      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -806,8 +753,8 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
       "typeVersion": 1,
       "position": [
-        224,
-        256
+        144,
+        128
       ],
       "id": "bba0b8ed-fd7e-443e-95d4-b4fd59763de7",
       "name": "Google Gemini Chat Model1",
@@ -825,8 +772,8 @@
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
       "typeVersion": 1.3,
       "position": [
-        464,
-        240
+        272,
+        128
       ],
       "id": "e04ba81e-619c-43da-8bda-c85384841954",
       "name": "Structured Output Parser1"
@@ -840,8 +787,8 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        1824,
-        144
+        1600,
+        -112
       ],
       "id": "06bd0486-5c35-4725-a2d3-3d9e65aa8846",
       "name": "enviarExitosoTelegram",
@@ -852,50 +799,819 @@
           "name": "Telegram account"
         }
       }
-    }
-  ],
-  "pinData": {
-    "calcularDias": [
-      {
-        "json": {
-          "tipo_evento": "Eventos sociales",
-          "fecha_evento": "2026-01-01",
-          "ubicacion_evento": "Hacienda El Paraíso, Caracas",
-          "duracion_estimada": "6 horas",
-          "tiene_internet_venue": "No",
-          "paquete_interes": "Premium",
-          "nombre_cliente": "María González",
-          "email_cliente": "erjgomezf@gmail.com",
-          "telefono_cliente": "+58 412 9876543",
-          "comentarios_adicionales": "Es una boda al aire libre, necesitamos cobertura de la ceremonia y la recepción. Queremos transmitir en vivo para familiares en el exterior.",
-          "add_ons_solicitados": [
-            "Internet Starlink",
-            "Overlays Personalizados"
-          ],
-          "tipo_celebracion": "Boda",
-          "numero_invitados": 150,
-          "momentos_clave": [
-            "Ceremonia",
-            "Entrada de novios",
-            "Baile",
-            "Brindis"
-          ],
-          "timestamp": "2025-12-26T14:05:00.000Z",
-          "dias_del_evento": 29,
-          "timestamp_solicitud": "2025-12-03T17:40:28.418Z",
-          "fecha_procesamiento": "03/12/2025, 13:40:28",
-          "_metadata_calculo": {
-            "dias_calculados": 29,
-            "fecha_evento_iso": "2026-01-01T00:00:00.000Z",
-            "fecha_calculo_iso": "2025-12-03T17:40:28.418Z",
-            "evento_en_pasado": false,
-            "semanas_restantes": 4,
-            "meses_restantes": 0
-          }
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message",
+          "callback_query"
+        ],
+        "additionalFields": {}
+      },
+      "id": "1d13cd10-3cb6-47ac-94ee-4e71e854fe9a",
+      "name": "telegramTrigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1,
+      "position": [
+        -3808,
+        192
+      ],
+      "webhookId": "telegram-webhook-id",
+      "credentials": {
+        "telegramApi": {
+          "id": "pwBAa59uy9ggvhua",
+          "name": "Telegram account"
         }
       }
-    ]
-  },
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1RpFKNcF80lQgmt3k4-YTU0UJg9Vwih1_Gsd8tD66yuA",
+          "mode": "list",
+          "cachedResultName": "Sesiones_Telegram",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RpFKNcF80lQgmt3k4-YTU0UJg9Vwih1_Gsd8tD66yuA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hoja 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RpFKNcF80lQgmt3k4-YTU0UJg9Vwih1_Gsd8tD66yuA/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "chat_id",
+              "lookupValue": "={{ $('telegramTrigger').item.json.message?.chat?.id || $('telegramTrigger').item.json.callback_query?.message?.chat?.id }}"
+            }
+          ]
+        },
+        "combineFilters": "=OR",
+        "options": {}
+      },
+      "id": "cb549c70-1052-4e20-a939-585775f61ada",
+      "name": "buscarSesion",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        -3584,
+        192
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "pn9KPrV0bTFz3NPp",
+          "name": "Google Sheets account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * ============================================\n * NODO: logicaBot (State Machine)\n * ============================================\n * \n * PROPÓSITO:\n * Gestionar el flujo de la conversación del bot de reservaciones.\n * Determina el siguiente paso basado en el estado actual y la entrada del usuario.\n * \n * INPUT (desde nodos anteriores):\n * - message: Objeto del mensaje de Telegram (texto, callback_query, etc.)\n * - session: Estado actual del usuario desde Google Sheets (paso_actual, datos_json)\n * \n * OUTPUT:\n * - response_text: Texto a enviar al usuario\n * - response_buttons: Botones inline (si aplica)\n * - next_step: Nuevo paso a guardar en Sheets\n * - update_data: Nuevos datos a guardar en Sheets\n * - action: Acción a ejecutar (ej: 'reply', 'send_to_central', 'cancel')\n */\n\n// ============================================\n// CONFIGURACIÓN\n// ============================================\n\nconst STEPS = {\n  START: 'start',\n  TIPO_EVENTO: 'tipo_evento',\n  FECHA: 'fecha',\n  CIUDAD: 'ciudad',\n  PAQUETE: 'paquete',\n  NOMBRE: 'nombre',\n  EMAIL: 'email',\n  TELEFONO: 'telefono',\n  CONFIRMACION: 'confirmacion',\n  MENU_CORRECCION: 'menu_correccion',      // Nuevo: menú para elegir qué corregir\n  CORRIGIENDO_CAMPO: 'corrigiendo_campo',  // Nuevo: capturando nuevo valor\n  VALIDACION_IA: 'validacion_ia',\n  COMPLETADO: 'completado'\n};\n\n// Configuración del AI Validator\nconst AI_CONFIG = {\n  MAX_INTENTOS: 4,\n  ORIGEN: 'telegram',  // Identificador del canal\n  CAMPOS_REQUERIDOS: [\n    'tipo_evento',\n    'fecha_evento',\n    'ubicacion_evento',\n    'paquete_interes',\n    'nombre_cliente',\n    'email_cliente',\n    'telefono_cliente'\n  ]\n};\n\nconst OPTIONS = {\n  TIPO_EVENTO: [\n    [{ text: '🎊 Eventos Sociales', callback_data: 'Eventos sociales' }],\n    [{ text: '🏢 Corporativo', callback_data: 'Conferencias y eventos corporativos' }],\n    [{ text: '🎮 E-Sports', callback_data: 'E-Sport y Gaming' }],\n    [{ text: '🎵 Conciertos', callback_data: 'Conciertos y Eventos Artísticos' }],\n    [{ text: '⛪ Religiosos', callback_data: 'Eventos Religiosos' }],\n    [{ text: '⚽ Deportivos', callback_data: 'Eventos Deportivos' }]\n  ],\n  PAQUETE: [\n    [{ text: '🥉 Básico (1 Cam)', callback_data: 'Básico' }],\n    [{ text: '🥈 Estándar (2 Cam)', callback_data: 'Estándar' }],\n    [{ text: '🥇 Premium (3 Cam)', callback_data: 'Premium' }],\n    [{ text: '💎 Enterprise (4K)', callback_data: 'Enterprise' }]\n  ],\n  CONFIRMACION: [\n    [{ text: '✅ Confirmar y Enviar', callback_data: 'confirmar' }],\n    [{ text: '✏️ Corregir un dato', callback_data: 'corregir' }],\n    [{ text: '❌ Cancelar', callback_data: 'cancelar' }]\n  ],\n  MENU_CORRECCION: [\n    [{ text: '🎊 Tipo de Evento', callback_data: 'edit_tipo_evento' }],\n    [{ text: '📅 Fecha', callback_data: 'edit_fecha_evento' }],\n    [{ text: '📍 Ciudad', callback_data: 'edit_ubicacion_evento' }],\n    [{ text: '📦 Paquete', callback_data: 'edit_paquete_interes' }],\n    [{ text: '👤 Nombre', callback_data: 'edit_nombre_cliente' }],\n    [{ text: '📧 Email', callback_data: 'edit_email_cliente' }],\n    [{ text: '📞 Teléfono', callback_data: 'edit_telefono_cliente' }],\n    [{ text: '⬅️ Volver al Resumen', callback_data: 'volver_resumen' }]\n  ]\n};\n\n// ============================================\n// VALIDADORES\n// ============================================\n\nconst Validators = {\n  fecha: (text) => {\n    // Regex DD/MM/YYYY\n    const regex = /^(\\d{2})\\/(\\d{2})\\/(\\d{4})$/;\n    const match = text.match(regex);\n    if (!match) return { valid: false, error: 'Formato incorrecto. Usa DD/MM/YYYY (ej: 25/12/2025)' };\n    \n    const day = parseInt(match[1]);\n    const month = parseInt(match[2]) - 1; // Meses 0-11\n    const year = parseInt(match[3]);\n    \n    const date = new Date(year, month, day);\n    const now = new Date();\n    now.setHours(0,0,0,0);\n    \n    if (date < now) return { valid: false, error: 'La fecha debe ser futura.' };\n    \n    return { valid: true, value: text };\n  },\n  \n  ciudad: (text) => {\n    if (!text || text.length < 3) return { valid: false, error: 'Por favor escribe una ciudad válida (mínimo 3 letras).' };\n    \n    // Detectar caracteres sospechosos (posible inyección de comandos)\n    // Permitir: letras, números, espacios, comas, acentos, ñ, guiones simples entre palabras\n    const caracteresInvalidos = /[\\.\\/\\+\\&\\%\\@\\#\\$\\!\\?\\*\\<\\>\\|\\\\\\^\\[\\]\\{\\}\\(\\)\\`\\~\\_\\=]/;\n    if (caracteresInvalidos.test(text)) {\n      return { valid: false, error: 'La ciudad contiene caracteres no válidos. Solo letras, espacios y comas.' };\n    }\n    \n    // Rechazar si empieza con / (comando de bot)\n    if (text.startsWith('/')) {\n      return { valid: false, error: 'Eso parece un comando, no una ciudad. Por favor escribe el nombre de la ciudad.' };\n    }\n    \n    return { valid: true, value: text };\n  },\n  \n  nombre: (text) => {\n    if (!text || text.length < 3) return { valid: false, error: 'Por favor escribe tu nombre completo.' };\n    return { valid: true, value: text };\n  },\n  \n  email: (text) => {\n    const regex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\n    if (!regex.test(text)) return { valid: false, error: 'Correo inválido. Ejemplo: nombre@correo.com' };\n    return { valid: true, value: text };\n  },\n  \n  telefono: (text) => {\n    // Acepta +, espacios, guiones y números. Mínimo 10 dígitos.\n    const clean = text.replace(/\\D/g, '');\n    if (clean.length < 10) return { valid: false, error: 'Número inválido. Incluye código de área (ej: +58 412...)' };\n    return { valid: true, value: text };\n  }\n};\n\n// ============================================\n// LÓGICA PRINCIPAL\n// ============================================\n\n// ============================================\n// MAPEO DE INPUTS (N8N)\n// ============================================\n\n// 1. Obtener el update de Telegram (siempre del nodo Trigger)\nlet telegramUpdate = {};\ntry {\n    telegramUpdate = $('telegramTrigger').first().json;\n} catch (e) {\n    console.log('⚠️ No se pudo leer telegramTrigger, usando input directo');\n    telegramUpdate = $input.item.json;\n}\n\n// 2. Obtener la sesión (del nodo buscarSesion)\nlet sessionData = {};\ntry {\n    // Intentamos leer del nodo buscarSesion si existe\n    sessionData = $('buscarSesion').first().json;\n} catch (e) {\n    console.log('⚠️ No se pudo leer buscarSesion, asumiendo sesión nueva');\n    sessionData = {};\n}\n\n// 3. Combinar todo en un objeto de trabajo\nconst update = {\n    ...telegramUpdate,\n    ...sessionData\n};\n\n// 4. Extraer datos específicos\nconst session = {\n    paso_actual: sessionData.paso_actual || null,\n    datos_json: sessionData.datos_json || null,\n    intentos_fallidos: sessionData.intentos_fallidos || 0\n};\n\nconst incomingText = telegramUpdate.message?.text || '';\nconst incomingCallback = telegramUpdate.callback_query?.data || null;\n\n// Debugging\nconsole.log('--- DEBUG INFO ---');\nconsole.log('Telegram Update:', telegramUpdate);\nconsole.log('Session Data:', sessionData);\nconsole.log('Incoming Callback:', incomingCallback);\nconsole.log('Current Step:', session.paso_actual);\nconsole.log('------------------');\n\nlet currentStep = session.paso_actual || STEPS.START;\nconst currentData = session.datos_json ? JSON.parse(session.datos_json) : {};\nconst intentos = parseInt(session.intentos_fallidos || 0);\n\n// FALLBACK: Si estamos en START pero recibimos un callback, asumimos que es respuesta al menú\n// Esto corrige el problema si la sesión no se guardó/recuperó correctamente\nif (currentStep === STEPS.START && incomingCallback) {\n    console.log('⚠️ Detectado callback en paso START. Forzando paso FECHA (Recovery Mode).');\n    currentStep = STEPS.FECHA;\n}\n\nlet response = {\n  text: '',\n  buttons: null, // Array de botones para N8N\n  next_step: currentStep,\n  update_data: currentData,\n  action: 'reply',\n  new_intentos: 0, // Por defecto reseteamos intentos si hay éxito\n  tipoValidacion: 'BOT' // Por defecto, el bot controla la validación\n};\n\n// Función helper para generar mensaje de resumen según el paso actual\nfunction generarMensajeResumen(paso, datos) {\n  const resumenDatos = [];\n  if (datos.tipo_evento) resumenDatos.push(`🎊 Evento: ${datos.tipo_evento}`);\n  if (datos.fecha_evento) resumenDatos.push(`📅 Fecha: ${datos.fecha_evento}`);\n  if (datos.ubicacion_evento) resumenDatos.push(`📍 Ciudad: ${datos.ubicacion_evento}`);\n  if (datos.paquete_interes) resumenDatos.push(`📦 Paquete: ${datos.paquete_interes}`);\n  if (datos.nombre_cliente) resumenDatos.push(`👤 Nombre: ${datos.nombre_cliente}`);\n  if (datos.email_cliente) resumenDatos.push(`📧 Email: ${datos.email_cliente}`);\n  \n  const datosStr = resumenDatos.length > 0 ? `**Datos guardados:**\\n${resumenDatos.join('\\n')}\\n\\n` : '';\n  \n  const mensajesPorPaso = {\n    [STEPS.FECHA]: '¿Qué tipo de evento deseas transmitir?',\n    [STEPS.CIUDAD]: '📅 ¿Cuál es la fecha del evento? (DD/MM/YYYY)',\n    [STEPS.PAQUETE]: '📍 ¿En qué ciudad será el evento?',\n    [STEPS.NOMBRE]: '📦 Selecciona un paquete:',\n    [STEPS.EMAIL]: '👤 ¿Cuál es tu nombre completo?',\n    [STEPS.TELEFONO]: '📧 ¿Cuál es tu correo electrónico?',\n    [STEPS.CONFIRMACION]: '📞 ¿Cuál es tu número de teléfono?',\n    [STEPS.COMPLETADO]: '¿Confirmas los datos?'\n  };\n  \n  return datosStr + (mensajesPorPaso[paso] || 'Continuemos donde quedamos...');\n}\n\n// Función helper para obtener botones según el paso\nfunction obtenerBotonesParaPaso(paso) {\n  const botonesPorPaso = {\n    [STEPS.FECHA]: OPTIONS.TIPO_EVENTO,\n    [STEPS.NOMBRE]: OPTIONS.PAQUETE,\n    [STEPS.COMPLETADO]: OPTIONS.CONFIRMACION\n  };\n  return botonesPorPaso[paso] || null;\n}\n\n// Función helper para generar el resumen completo de confirmación\nfunction generarResumenConfirmacion(datos) {\n  const advertencia = datos.revision_manual ? '\\n⚠️ **Nota:** Algunos datos requieren revisión manual.\\n' : '';\n  \n  return `\n📋 **RESUMEN DE SOLICITUD**\n${advertencia}\n👤 **Cliente:** ${datos.nombre_cliente || 'No especificado'}\n📧 **Email:** ${datos.email_cliente || 'No especificado'}\n📞 **Tel:** ${datos.telefono_cliente || 'No especificado'}\n\n🎊 **Evento:** ${datos.tipo_evento || 'No especificado'}\n📅 **Fecha:** ${datos.fecha_evento || 'No especificado'}\n📍 **Lugar:** ${datos.ubicacion_evento || 'No especificado'}\n📦 **Paquete:** ${datos.paquete_interes || 'No especificado'}\n\n¿Todo correcto?\n  `.trim();\n}\n\n// Función helper para manejar validación con fallback\n// fieldName: nombre del campo donde guardar el dato (ej: 'fecha_evento', 'nombre_cliente')\nfunction handleValidation(validatorResult, rawText, successNextStep, successMessage, fieldName) {\n  if (validatorResult.valid) {\n    // Éxito: Guardamos dato limpio y avanzamos\n    response.update_data[fieldName] = validatorResult.value;\n    \n    response.text = successMessage;\n    response.next_step = successNextStep;\n    response.new_intentos = 0;\n    return true;\n  } else {\n    // Error\n    if (intentos >= 1) {\n      // FALLBACK: Segundo error, aceptamos el dato tal cual\n      response.update_data[fieldName] = rawText;\n      response.update_data.revision_manual = true; // Flag para ventas\n      response.update_data[`error_${fieldName}`] = validatorResult.error;\n      \n      response.text = `⚠️ No pude validar este dato, pero lo anoté tal cual para que un humano lo revise.\\n\\nContinuemos... ${successMessage}`;\n      response.next_step = successNextStep;\n      response.new_intentos = 0;\n      return true;\n    } else {\n      // Primer error: Pedimos intentar de nuevo\n      response.text = `❌ ${validatorResult.error}\\n\\nPor favor intenta de nuevo.`;\n      response.new_intentos = intentos + 1;\n      return false;\n    }\n  }\n}\n\n// Manejo de Comandos Globales\nif (incomingText === '/cancelar') {\n  return {\n    text: '🚫 Reservación cancelada. Escribe /reservar para comenzar de nuevo.',\n    action: 'cancel_session'\n  };\n}\n\nif (incomingText === '/start' || incomingText === '/reservar') {\n  // Verificar si ya existe una sesión activa con datos\n  const tieneSessionActiva = currentStep !== STEPS.START && Object.keys(currentData).length > 0;\n  \n  if (tieneSessionActiva) {\n    // Ya tiene sesión: NO reiniciar, continuar donde quedó\n    // Incrementar intentos fallidos (el usuario escribió /start en lugar del dato esperado)\n    const mensajeResumen = generarMensajeResumen(currentStep, currentData);\n    \n    return {\n      text: `👋 ¡Hola de nuevo! Veo que ya tenías una reservación en progreso.\\n\\n${mensajeResumen}`,\n      buttons: obtenerBotonesParaPaso(currentStep),\n      next_step: currentStep,  // Mantener el paso actual\n      update_data: currentData,  // Preservar datos existentes\n      action: 'reply',\n      new_intentos: intentos + 1  // Incrementar intentos\n    };\n  }\n  \n  // No tiene sesión activa: comenzar nuevo flujo\n  return {\n    text: '👋 ¡Hola! Soy el asistente de Live Moments.\\n\\n¿Qué tipo de evento deseas transmitir?',\n    buttons: OPTIONS.TIPO_EVENTO,\n    next_step: STEPS.FECHA,\n    action: 'reply',\n    new_intentos: 0\n  };\n}\n\n// Máquina de Estados\nswitch (currentStep) {\n  \n  case STEPS.START:\n    response.text = '👋 ¡Hola! Para comenzar una reservación, elige una opción:';\n    response.buttons = OPTIONS.TIPO_EVENTO;\n    response.next_step = STEPS.FECHA;\n    break;\n\n  case STEPS.FECHA:\n    // Input anterior: TIPO_EVENTO\n    if (incomingCallback) {\n      response.update_data.tipo_evento = incomingCallback;\n      response.text = `✅ Evento: ${incomingCallback}\\n\\n📅 ¿Cuál es la fecha del evento? (DD/MM/YYYY)`;\n      response.next_step = STEPS.CIUDAD;\n    } else {\n      // Si escribió texto, asumimos que es el tipo (fallback simple)\n      response.update_data.tipo_evento = incomingText;\n      response.text = `📅 ¿Cuál es la fecha del evento? (DD/MM/YYYY)`;\n      response.next_step = STEPS.CIUDAD;\n    }\n    break;\n\n  case STEPS.CIUDAD:\n    // Input anterior: FECHA\n    handleValidation(\n      Validators.fecha(incomingText), \n      incomingText, \n      STEPS.PAQUETE, \n      '📍 ¿En qué ciudad será el evento?',\n      'fecha_evento'  // <-- Campo donde guardar\n    );\n    break;\n\n  case STEPS.PAQUETE:\n    // Input anterior: CIUDAD\n    handleValidation(\n      Validators.ciudad(incomingText),\n      incomingText,\n      STEPS.NOMBRE,\n      '📦 Selecciona un paquete:',\n      'ubicacion_evento'  // <-- Campo donde guardar\n    );\n    if (response.next_step === STEPS.NOMBRE) {\n        response.buttons = OPTIONS.PAQUETE;\n    }\n    break;\n\n  case STEPS.NOMBRE:\n    // Input anterior: PAQUETE (Callback)\n    if (incomingCallback) {\n      response.update_data.paquete_interes = incomingCallback;\n      response.text = `✅ Paquete: ${incomingCallback}\\n\\n👤 ¿Cuál es tu nombre completo?`;\n      response.next_step = STEPS.EMAIL;\n    } else {\n      response.text = '⚠️ Por favor selecciona un paquete usando los botones.';\n      response.buttons = OPTIONS.PAQUETE;\n    }\n    break;\n\n  case STEPS.EMAIL:\n    // Input anterior: NOMBRE\n    handleValidation(\n      Validators.nombre(incomingText),\n      incomingText,\n      STEPS.TELEFONO,\n      '📧 ¿Cuál es tu correo electrónico?',\n      'nombre_cliente'  // <-- Campo donde guardar\n    );\n    break;\n\n  case STEPS.TELEFONO:\n    // Input anterior: EMAIL\n    handleValidation(\n      Validators.email(incomingText),\n      incomingText,\n      STEPS.CONFIRMACION,\n      '📞 ¿Cuál es tu número de teléfono?',\n      'email_cliente'  // <-- Campo donde guardar\n    );\n    break;\n\n  case STEPS.CONFIRMACION:\n    // Input anterior: TELEFONO\n    const validado = handleValidation(\n      Validators.telefono(incomingText),\n      incomingText,\n      STEPS.COMPLETADO,\n      '', // El mensaje se genera abajo\n      'telefono_cliente'  // <-- Campo donde guardar\n    );\n    \n    if (validado) {\n      const d = response.update_data;\n      const advertencia = d.revision_manual ? '\\n⚠️ **Nota:** Algunos datos requieren revisión manual.\\n' : '';\n      \n      const resumen = `\n📋 **RESUMEN DE SOLICITUD**\n${advertencia}\n👤 **Cliente:** ${d.nombre_cliente}\n📧 **Email:** ${d.email_cliente}\n📞 **Tel:** ${d.telefono_cliente}\n\n🎊 **Evento:** ${d.tipo_evento}\n📅 **Fecha:** ${d.fecha_evento}\n📍 **Lugar:** ${d.ubicacion_evento}\n📦 **Paquete:** ${d.paquete_interes}\n\n¿Todo correcto?\n      `;\n      response.text = resumen;\n      response.buttons = OPTIONS.CONFIRMACION;\n    }\n    break;\n\n  case STEPS.COMPLETADO:\n    if (incomingCallback === 'confirmar') {\n      // En lugar de enviar directo, pasamos a validación IA\n      response.text = '🔍 Validando tus datos...';\n      response.action = 'validate_with_ai';  // Nueva acción\n      response.next_step = STEPS.VALIDACION_IA;\n      response.update_data.origen = AI_CONFIG.ORIGEN;  // Marcar origen\n      response.update_data.intentos_validacion = 0;     // Iniciar contador\n      response.update_data.tipoValidacion = 'IA';       // Marcar que la IA controla\n    } else if (incomingCallback === 'corregir') {\n      // Mostrar menú de campos a corregir\n      response.text = '✏️ ¿Qué dato deseas corregir?';\n      response.buttons = OPTIONS.MENU_CORRECCION;\n      response.next_step = STEPS.MENU_CORRECCION;\n    } else if (incomingCallback === 'cancelar') {\n      response.text = '🚫 Solicitud cancelada.';\n      response.action = 'cancel_session';\n    } else {\n      response.text = 'Por favor elige una opción usando los botones.';\n      response.buttons = OPTIONS.CONFIRMACION;\n    }\n    break;\n\n  case STEPS.MENU_CORRECCION:\n    // El usuario eligió qué campo corregir\n    if (incomingCallback === 'volver_resumen') {\n      // Volver al resumen sin cambios\n      const d = response.update_data;\n      const resumen = generarResumenConfirmacion(d);\n      response.text = resumen;\n      response.buttons = OPTIONS.CONFIRMACION;\n      response.next_step = STEPS.COMPLETADO;\n    } else if (incomingCallback && incomingCallback.startsWith('edit_')) {\n      // Extraer el nombre del campo a editar\n      const campoEditar = incomingCallback.replace('edit_', '');\n      response.update_data._campo_editando = campoEditar;\n      \n      // Mostrar mensaje según el campo\n      const mensajesEdicion = {\n        'tipo_evento': '🎊 Selecciona el nuevo tipo de evento:',\n        'fecha_evento': '📅 Escribe la nueva fecha (DD/MM/YYYY):',\n        'ubicacion_evento': '📍 Escribe la nueva ciudad:',\n        'paquete_interes': '📦 Selecciona el nuevo paquete:',\n        'nombre_cliente': '👤 Escribe tu nombre completo:',\n        'email_cliente': '📧 Escribe tu correo electrónico:',\n        'telefono_cliente': '📞 Escribe tu número de teléfono:'\n      };\n      \n      response.text = mensajesEdicion[campoEditar] || 'Escribe el nuevo valor:';\n      response.next_step = STEPS.CORRIGIENDO_CAMPO;\n      \n      // Si es tipo_evento o paquete, mostrar botones\n      if (campoEditar === 'tipo_evento') {\n        response.buttons = OPTIONS.TIPO_EVENTO;\n      } else if (campoEditar === 'paquete_interes') {\n        response.buttons = OPTIONS.PAQUETE;\n      }\n    } else {\n      response.text = '⚠️ Por favor selecciona una opción del menú.';\n      response.buttons = OPTIONS.MENU_CORRECCION;\n    }\n    break;\n\n  case STEPS.CORRIGIENDO_CAMPO:\n    // El usuario está ingresando el nuevo valor del campo\n    const campoEditando = currentData._campo_editando;\n    const nuevoValor = incomingCallback || incomingText;\n    \n    if (campoEditando && nuevoValor) {\n      // Validar el nuevo valor según el campo\n      let valorValidado = nuevoValor;\n      let esValido = true;\n      \n      // Aplicar validador correspondiente\n      if (campoEditando === 'fecha_evento') {\n        const resultado = Validators.fecha(nuevoValor);\n        esValido = resultado.valid;\n        if (!esValido) {\n          response.text = `❌ ${resultado.error}\\n\\nIntenta de nuevo:`;\n          response.next_step = STEPS.CORRIGIENDO_CAMPO;\n          break;\n        }\n        valorValidado = resultado.value;\n      } else if (campoEditando === 'ubicacion_evento') {\n        const resultado = Validators.ciudad(nuevoValor);\n        esValido = resultado.valid;\n        if (!esValido) {\n          response.text = `❌ ${resultado.error}\\n\\nIntenta de nuevo:`;\n          response.next_step = STEPS.CORRIGIENDO_CAMPO;\n          break;\n        }\n        valorValidado = resultado.value;\n      } else if (campoEditando === 'nombre_cliente') {\n        const resultado = Validators.nombre(nuevoValor);\n        esValido = resultado.valid;\n        if (!esValido) {\n          response.text = `❌ ${resultado.error}\\n\\nIntenta de nuevo:`;\n          response.next_step = STEPS.CORRIGIENDO_CAMPO;\n          break;\n        }\n        valorValidado = resultado.value;\n      } else if (campoEditando === 'email_cliente') {\n        const resultado = Validators.email(nuevoValor);\n        esValido = resultado.valid;\n        if (!esValido) {\n          response.text = `❌ ${resultado.error}\\n\\nIntenta de nuevo:`;\n          response.next_step = STEPS.CORRIGIENDO_CAMPO;\n          break;\n        }\n        valorValidado = resultado.value;\n      } else if (campoEditando === 'telefono_cliente') {\n        const resultado = Validators.telefono(nuevoValor);\n        esValido = resultado.valid;\n        if (!esValido) {\n          response.text = `❌ ${resultado.error}\\n\\nIntenta de nuevo:`;\n          response.next_step = STEPS.CORRIGIENDO_CAMPO;\n          break;\n        }\n        valorValidado = resultado.value;\n      }\n      \n      // Guardar el nuevo valor\n      response.update_data[campoEditando] = valorValidado;\n      delete response.update_data._campo_editando;\n      \n      // Volver al resumen\n      const d = response.update_data;\n      const resumen = `✅ **Dato actualizado**\\n\\n${generarResumenConfirmacion(d)}`;\n      response.text = resumen;\n      response.buttons = OPTIONS.CONFIRMACION;\n      response.next_step = STEPS.COMPLETADO;\n    } else {\n      response.text = '⚠️ No recibí un valor válido. Por favor intenta de nuevo.';\n      response.next_step = STEPS.CORRIGIENDO_CAMPO;\n    }\n    break;\n\n  case STEPS.VALIDACION_IA:\n    // Este paso maneja respuestas a preguntas de la IA sobre campos faltantes\n    const campoFaltante = currentData._campo_pendiente;\n    const intentosIA = parseInt(currentData.intentos_validacion || 0);\n    \n    if (campoFaltante && incomingText) {\n      // Guardamos la respuesta en el campo correspondiente\n      response.update_data[campoFaltante] = incomingText;\n      delete response.update_data._campo_pendiente;\n      \n      // Incrementar contador de intentos\n      response.update_data.intentos_validacion = intentosIA + 1;\n      \n      // Verificar límite de intentos\n      if (intentosIA + 1 >= AI_CONFIG.MAX_INTENTOS) {\n        response.text = '⚠️ Se alcanzó el límite de validaciones. Tu solicitud será revisada manualmente.';\n        response.action = 'send_to_error_support';  // Escalar a soporte\n        response.update_data.requiere_revision = true;\n        response.next_step = STEPS.START;\n      } else {\n        // Volver a validar con IA\n        response.text = '🔍 Verificando...';\n        response.action = 'validate_with_ai';\n        response.next_step = STEPS.VALIDACION_IA;\n      }\n    } else {\n      // No hay campo pendiente o no hay texto, continuar validación\n      response.action = 'validate_with_ai';\n      response.next_step = STEPS.VALIDACION_IA;\n    }\n    break;\n\n  default:\n    response.text = '⚠️ Error de estado. Escribe /start para reiniciar.';\n    response.next_step = STEPS.START;\n}\n\n// Validación de seguridad: nunca enviar texto vacío\nif (!response.text || response.text.trim() === '') {\n  response.text = '⚠️ Ocurrió un error. Por favor escribe /start para comenzar de nuevo.';\n}\n\nreturn response;\n"
+      },
+      "id": "1373a86e-8e51-492a-b714-8c9e22368d30",
+      "name": "logicaBot",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2912,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "8ef278a3-d116-4d40-9327-c85debff0ba2",
+              "leftValue": "={{ $json.isEmpty() }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -3360,
+        192
+      ],
+      "id": "d01a6321-4bb3-458f-af09-c76738bb1569",
+      "name": "esNuevoUsuario"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1RpFKNcF80lQgmt3k4-YTU0UJg9Vwih1_Gsd8tD66yuA",
+          "mode": "list",
+          "cachedResultName": "Sesiones_Telegram",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RpFKNcF80lQgmt3k4-YTU0UJg9Vwih1_Gsd8tD66yuA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hoja 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RpFKNcF80lQgmt3k4-YTU0UJg9Vwih1_Gsd8tD66yuA/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "chat_id": "={{ $('telegramTrigger').item.json.message?.chat?.id || $('telegramTrigger').item.json.callback_query?.message?.chat?.id }}",
+            "paso_actual": "={{ $('telegramTrigger').item.json.message.text }}",
+            "intentos_fallidos": "0",
+            "ultima_interaccion": "={{ new Date().toISOString() }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "chat_id",
+              "displayName": "chat_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "paso_actual",
+              "displayName": "paso_actual",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "datos_json",
+              "displayName": "datos_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ultima_interaccion",
+              "displayName": "ultima_interaccion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "intentos_fallidos",
+              "displayName": "intentos_fallidos",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "update_id",
+              "displayName": "update_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "callback_query",
+              "displayName": "callback_query",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "57a1ce14-dcc3-42b2-b03c-cf25e65b2ce3",
+      "name": "crearSesion",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        -3136,
+        -80
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "pn9KPrV0bTFz3NPp",
+          "name": "Google Sheets account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -2400,
+        176
+      ],
+      "id": "239e94a8-4fa5-46e9-936c-15689a2d280e",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ZrCFnMmAvzAfyUkm",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "validate_with_ai",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "8d729915-72f7-4aa3-a7af-112659c5c84e"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "AI Agent"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "97bcbcbe-384b-4a80-8528-0028f2d541e0",
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "send_to_central",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Workflow Central"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "b2c5ec52-9ac3-4c76-bf0b-7b26bc4c46f1",
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "cancel_session",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Cancelar"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "750b6895-0193-4427-b01e-afaaec3c129e",
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "reply",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "HTTP Request Telegram"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "5fc7e0f3-82e5-4969-bd3a-f12a02ede853",
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "send_to_error_support",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Correo Error"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        -2688,
+        -80
+      ],
+      "id": "22f7e742-63ee-4b19-9610-f0297e074387",
+      "name": "switchAccion"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "64088e52-161e-4b54-b5da-035aebd33849",
+              "leftValue": "={{ $json.tipoValidacion }}",
+              "rightValue": "IA",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -3136,
+        528
+      ],
+      "id": "5d9bd0a2-4c02-49e3-8f18-1aa07875e95d",
+      "name": "esValidacionIA"
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * ============================================\n * NODO: prepararDatosIA\n * ============================================\n * \n * PROPÓSITO:\n * Preparar los datos cuando el usuario responde a una pregunta de la IA.\n * Este nodo se usa cuando tipoValidacion = 'IA' para bypass de logicaBot.\n * \n * INPUT:\n * - Session data desde buscarSesion (incluye datos_json con _campo_pendiente)\n * - Telegram message desde telegramTrigger\n * \n * OUTPUT:\n * - update_data: Datos completos con el campo corregido\n * - campo_pendiente: El campo que se está corrigiendo\n * - respuesta_usuario: El valor nuevo que el usuario proporcionó\n * - Para AI Agent: contexto completo para re-validar\n */\n\nconst session = $input.item.json;\nconst telegramData = $('telegramTrigger').first().json;\n\n// Obtener el texto o callback del usuario\nconst incomingText = telegramData.message?.text || '';\nconst incomingCallback = telegramData.callback_query?.data || '';\nconst userInput = incomingText || incomingCallback;\n\n// Obtener chat_id\nconst chatId = telegramData.message?.chat?.id || telegramData.callback_query?.message?.chat?.id;\n\n// Parsear datos existentes de la sesión\nlet datosUsuario = {};\ntry {\n  datosUsuario = JSON.parse(session.datos_json || '{}');\n  console.log('✅ datos_json parseado correctamente:', JSON.stringify(datosUsuario));\n} catch (e) {\n  console.error('❌ Error parseando datos_json:', e);\n  console.log('Raw datos_json:', session.datos_json);\n  datosUsuario = {};\n}\n\n// Obtener el campo pendiente y los errores anteriores\nconst campoPendiente = datosUsuario._campo_pendiente || null;\nconst erroresAnteriores = datosUsuario._errores_ia || [];\nconst intentosActuales = parseInt(datosUsuario.intentos_validacion || 0);\n\nconsole.log(`🔍 Campo pendiente: ${campoPendiente}`);\nconsole.log(`📝 Respuesta del usuario: ${userInput}`);\n\n// Si hay un campo pendiente y el usuario envió algo, actualizar\nif (campoPendiente && userInput) {\n  console.log(`✏️ Actualizando campo ${campoPendiente} con valor: ${userInput}`);\n  datosUsuario[campoPendiente] = userInput;\n}\n\n// Incrementar contador de intentos\ndatosUsuario.intentos_validacion = intentosActuales + 1;\n\n// Preparar contexto para el AI Agent\n// El AI Agent necesita saber: datos actuales, qué campo se corrigió, y el valor nuevo\nconst contextoIA = {\n  datos_actuales: datosUsuario,\n  campo_corregido: campoPendiente,\n  valor_nuevo: userInput,\n  intentos: datosUsuario.intentos_validacion,\n  errores_anteriores: erroresAnteriores\n};\n\nreturn {\n  // Datos principales para el AI Agent\n  update_data: datosUsuario,\n  \n  // Contexto adicional para el AI Agent's User Message\n  campo_pendiente: campoPendiente,\n  respuesta_usuario: userInput,\n  contexto_validacion: JSON.stringify(contextoIA),\n  \n  // Metadata\n  chat_id: chatId,\n  origen: datosUsuario.origen || 'telegram',\n  intentos_validacion: datosUsuario.intentos_validacion,\n  tipoValidacion: 'IA',\n  \n  // Debug\n  _debug: {\n    session_raw: session,\n    campo_pendiente: campoPendiente,\n    user_input: userInput,\n    datos_parseados: datosUsuario,\n    timestamp: new Date().toISOString()\n  }\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2720,
+        512
+      ],
+      "id": "0064c437-fa7e-445d-b61e-76ad039c2569",
+      "name": "prepararDatosIA"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -1216,
+        -80
+      ],
+      "id": "3eb837db-c66c-4e90-a8ba-9a46ce763023",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1RpFKNcF80lQgmt3k4-YTU0UJg9Vwih1_Gsd8tD66yuA",
+          "mode": "list",
+          "cachedResultName": "Sesiones_Telegram",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RpFKNcF80lQgmt3k4-YTU0UJg9Vwih1_Gsd8tD66yuA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hoja 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RpFKNcF80lQgmt3k4-YTU0UJg9Vwih1_Gsd8tD66yuA/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "chat_id": "={{ $('telegramTrigger').item.json.message?.chat?.id || $('telegramTrigger').item.json.callback_query?.message?.chat?.id }}",
+            "paso_actual": "={{ $if($(' validadorIA').isExecuted, $(' validadorIA').item.json.next_step, $('switchAccion').item.json.next_step) }}",
+            "datos_json": "={{ $if($(' validadorIA').isExecuted, JSON.stringify($(' validadorIA').item.json.update_data), JSON.stringify($('switchAccion').item.json.update_data)) }}",
+            "ultima_interaccion": "={{ new Date().toISOString() }}",
+            "intentos_fallidos": "={{ $if($(' validadorIA').isExecuted, $(' validadorIA').item.json.update_data?.intentos_validacion || 0, $('switchAccion').item.json.new_intentos || 0) }}",
+            "tipoValidacion": "={{ $if($(' validadorIA').isExecuted, $(' validadorIA').item.json.update_data?.tipoValidacion || 'IA', $('switchAccion').item.json.tipoValidacion || 'BOT') }}"
+          },
+          "matchingColumns": [
+            "chat_id"
+          ],
+          "schema": [
+            {
+              "id": "chat_id",
+              "displayName": "chat_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "paso_actual",
+              "displayName": "paso_actual",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "datos_json",
+              "displayName": "datos_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ultima_interaccion",
+              "displayName": "ultima_interaccion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "intentos_fallidos",
+              "displayName": "intentos_fallidos",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "update_id",
+              "displayName": "update_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "callback_query",
+              "displayName": "callback_query",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "tipoValidacion",
+              "displayName": "tipoValidacion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "f564c9d8-f7f1-435c-9fad-c10de049854f",
+      "name": "actualizarSesion",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        -1440,
+        -544
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "pn9KPrV0bTFz3NPp",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * ============================================\n * NODO: validarDatosIA\n * ============================================ \n * \n * PROPÓSITO:\n * Validación básica de datos DESPUÉS de la validación de IA.\n * Verifica formato de nombre, email y teléfono.\n * \n * INPUT: Viene de ValidadorIA, datos están en update_data\n * OUTPUT: Agrega datos_validos y lista_errores\n */\n\nconst input = $input.item.json;\nconst errores = [];\n\n// Los datos vienen en update_data desde ValidadorIA\nconst datos = input.update_data || {};\n\nif (!datos.nombre_cliente || datos.nombre_cliente.length < 3) {\n    errores.push(\"Nombre inválido\");\n}\nif (!datos.email_cliente || !datos.email_cliente.includes('@')) {\n    errores.push(\"Email inválido\");\n}\nif (!datos.telefono_cliente || datos.telefono_cliente.replace(/\\D/g, '').length < 10) {\n    errores.push(\"Teléfono inválido\");\n}\n\nreturn {\n    ...input,\n    datos_validos: errores.length === 0,\n    lista_errores: errores\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1888,
+        -64
+      ],
+      "id": "148294ac-ce72-421b-9452-6c4adc6642cb",
+      "name": "validarDatosIA"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.action}}",
+                    "rightValue": "send_to_central",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "74df0a83-c9da-4bd7-a7fe-4024d6e33724"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "send_to_central"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "6cacbeec-0ccf-491f-99c5-16622a822d86",
+                    "leftValue": "={{$json.action}}",
+                    "rightValue": "ask_field",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "ask_field"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "8b30fb6c-802e-4852-b8fb-cdd6dbf308bf",
+                    "leftValue": "={{$json.action}}",
+                    "rightValue": "send_to_error_support",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "send_to_error_support"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        -1664,
+        -80
+      ],
+      "id": "5317aeee-4403-49e1-86ad-25ba7f2c9765",
+      "name": "switchValidacionIA"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.telegram.org/bot8450594238:AAHSw3lVD_SKbHhJavglYKsd0WKptmsulV0/sendMessage",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\n  (() => {\n    // Determinar de dónde vienen los botones (si hay)\n    const buttons = $if(\n      $('switchAccion').isExecuted,\n      $('switchAccion').item.json.buttons,\n      null\n    );\n    \n    // Determinar el texto - puede venir de switchAccion O de ValidadorIA\n    const texto = $if(\n      $(' validadorIA').isExecuted,\n      $(' validadorIA').item.json.text,\n      $('switchAccion').item.json.text\n    );\n    \n    // Objeto base\n    const body = {\n      \"chat_id\": $('telegramTrigger').item.json.message?.chat?.id || $('telegramTrigger').item.json.callback_query?.message?.chat?.id,\n      \"text\": texto\n    };\n    // Solo agregar reply_markup si hay botones válidos\n    if (buttons && Array.isArray(buttons) && buttons.length > 0) {\n      body.reply_markup = {\n        \"inline_keyboard\": buttons\n      };\n    }\n    return body;\n  })()\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -1440,
+        -352
+      ],
+      "id": "49a5d2d7-88db-4a5f-8934-92830b6c84e5",
+      "name": "HTTP_Request"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "502d5d42-25d0-4016-ae92-661472df7432",
+              "leftValue": "={{ $('validarDatos').item.json.datos_validos }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -96,
+        -80
+      ],
+      "id": "34cdb93a-11b1-47e3-9c30-436f13326fa7",
+      "name": "existenDatosValidos"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ JSON.stringify($json.update_data) }}",
+        "options": {
+          "systemMessage": "=Eres un validador de datos para \"Live Moments\", un servicio de streaming profesional para eventos.\n\nTu tarea es validar que los datos de la solicitud estén completos y correctos.\n\nREGLAS DE VALIDACIÓN:\n1. tipo_evento: No debe estar vacío. Valores válidos: \"Eventos sociales\", \"Conferencias y eventos corporativos\", \"E-Sport y Gaming\", \"Conciertos y Eventos Artísticos\", \"Eventos Religiosos\", \"Eventos Deportivos\"\n2. fecha_evento: Formato DD/MM/YYYY o YYYY-MM-DD, debe ser fecha futura\n3. ubicacion_evento: Mínimo 3 caracteres, debe ser una ciudad o dirección real o ficticia, pero que este dentro de esos parametros, RECHAZAR si contiene: / + & % @ # $ ! ? * < > | \\ ^ [ ] { } ( ) ~ _ = (estos caracteres indican posible comando o inyección)\n4. paquete_interes: Valores válidos: \"Básico\", \"Estándar\", \"Premium\", \"Enterprise\"\n5. nombre_cliente: Mínimo 3 caracteres, debe parecer un nombre real, RECHAZAR si contiene: / + & % @ # $ ! ? * < > | \\ ^ [ ] { } ( ) ~ _ = (estos caracteres indican posible comando o inyección)\n6. email_cliente: Debe ser un email válido (contener @ y dominio)\n7. telefono_cliente: Debe contener números (al menos 7 dígitos)\n\nINSTRUCCIONES:\n- El usuario puede cometer errores gramaticales, de puntuación o acortar las palabras, eso NO hace inválido el dato\n- Abreviaciones como \"Ccs\" (Caracas), \"Vzla\" (Venezuela) son VÁLIDAS\n- Si TODOS los campos están presentes y válidos, responde con valido: true\n- Si FALTA algún campo o es inválido, identifica EL PRIMER campo con problema\n- Genera una pregunta AMIGABLE y DIRECTA para solicitar ese dato\n- Sé conversacional pero profesional\n\nRESPONDE ÚNICAMENTE EN ESTE FORMATO JSON (sin markdown, sin explicación):\n{\n  \"valido\": true/false,\n  \"campo_faltante\": \"nombre_del_campo\" o null si todo está bien,\n  \"pregunta_usuario\": \"Pregunta amigable para pedir el dato faltante\" o null,\n  \"errores\": [\"lista de problemas encontrados\"] o []\n}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        -2464,
+        -64
+      ],
+      "id": "d37dcbc9-83a7-4d0d-b9f7-f8ebdbfb8732",
+      "name": "capaValidadorIA"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Genera un correo de confirmación personalizado para este cliente:\nDATOS DEL CLIENTE:\n- Nombre: {{ $json.nombre_cliente }}\n- Email: {{ $json.email_cliente }}\n- Teléfono: {{ $json.telefono_cliente }}\nDATOS DEL EVENTO:\n- Tipo: {{ $json.tipo_evento }}\n- Fecha: {{ $json.fecha_evento }}\n- Ubicación: {{ $json.ubicacion_evento }}\n- Duración: {{ $json.duracion_estimada }}\n- Internet en venue: {{ $json.tiene_internet_venue }}\nSOLICITUD:\n- Paquete seleccionado: {{ $json.paquete_interes }}\n- Add-ons solicitados: {{ $json.add_ons_solicitados ? $json.add_ons_solicitados.join(', ') : 'Ninguno' }}\n- Días hasta el evento: {{ $json.dias_del_evento }}\nINSTRUCCIONES:\n1. Usa el tono apropiado según el tipo de evento\n2. Confirma la recepción de la solicitud mencionando tipo de evento y fecha\n3. Proporciona recomendaciones sobre:\n   a) Validación o mejora del paquete seleccionado (si aplica)\n   b) Add-ons relevantes que NO hayan sido seleccionados\n   c) Consideraciones especiales:\n      - Si el evento es en menos de 15 días: mencionar urgencia\n      - Si no hay internet: recomendar solución (Starlink)\n      - Si duración >6 horas: sugerir equipo de respaldo\n4. Indica próximos pasos:\n   - Contacto del asesor en 24-48 horas\n   - Envío de cotización personalizada\n   - Videollamada de asesoría (si evento complejo)\n5. Despedida acorde al tono\nDevuelve SOLO el JSON, sin texto adicional.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "Eres un asistente de ventas experto en servicios de streaming profesional multicámara para eventos en vivo. Tu empresa se llama \"Live Moments\".\nTU ROL:\n- Generar correos de confirmación personalizados para clientes\n- Adaptar el tono según el tipo de evento\n- Proporcionar recomendaciones relevantes y útiles\n- Ser profesional pero cercano\nTONOS QUE DEBES USAR:\n1. FORMAL (para Eventos Religiosos y Conferencias/Corporativos):\n   - Vocabulario: ceremonias, servicios, presentaciones, audiencia\n   - Saludo: \"Estimado/a [Nombre]\"\n   - Despedida: \"Quedamos atentos. Saludos cordiales,\"\n   - Evitar: emojis excesivos, jerga informal\n2. ENTUSIASTA (para E-Sport/Gaming y Eventos Deportivos):\n   - Vocabulario: acción, jugadas, competencia, fans, emoción\n   - Saludo: \"¡Hola [Nombre]! 🎮\" o \"¡Hola [Nombre]! ⚽\"\n   - Despedida: \"¡Nos vemos en la transmisión! 🔥\"\n   - Usar: emojis relacionados (🎮 🏆 ⚡ 🔥 ⚽ 🏀)\n3. AMIGABLE (para Eventos Sociales):\n   - Vocabulario: celebración, momentos especiales, familia, amigos\n   - Saludo: \"Hola [Nombre], ¡qué emoción! 💝\"\n   - Despedida: \"¡Estamos ansiosos por ser parte de tu celebración! ✨\"\n   - Usar: emojis emotivos (💝 🎉 ✨ 🌟)\nPAQUETES DISPONIBLES:\n- Básico: 1 cámara HD, 1 micrófono, streaming a 1 plataforma\n- Estándar: 2 cámaras HD, 2 micrófonos, overlays básicos\n- Premium: 3 cámaras HD, 3 micrófonos profesionales, overlays avanzados, director técnico\n- Enterprise: 4 cámaras 4K, 4 micrófonos, streaming a 3 plataformas, branding personalizado\nADD-ONS DISPONIBLES:\n- Cámaras y Micrófonos adicionales\n- Internet Starlink (Garantía de conectividad)\n- Overlays Personalizados (Branding)\n- Plataforma Adicional (Multi-streaming)\n- Grabación (Archivo permanente)\nREGLAS IMPORTANTES:\n- NO inventes datos que no tienes\n- NO prometas precios específicos\n- NO garantices disponibilidad sin confirmar\n- SÍ sé honesto sobre limitaciones\n- SÍ proporciona valor en cada recomendación\nFORMATO DE SALIDA:\nDebes devolver ÚNICAMENTE un objeto JSON válido con esta estructura exacta:\n{\n  \"asunto\": \"Asunto del correo\",\n  \"saludo\": \"Saludo personalizado\",\n  \"parrafo_confirmacion\": \"Confirmación de recepción\",\n  \"recomendaciones\": {\n    \"paquete\": \"Recomendación sobre paquete o null\",\n    \"addons\": [\"addon1\", \"addon2\"] o [],\n    \"consideraciones\": \"Consideraciones especiales o null\"\n  },\n  \"proximos_pasos\": [\"paso1\", \"paso2\", \"paso3\"],\n  \"despedida\": \"Despedida personalizada\",\n  \"tono_detectado\": \"formal|entusiasta|amigable\"\n}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        128,
+        -112
+      ],
+      "id": "fc0c34f1-d591-4b42-bd44-d7b5205529dc",
+      "name": "generadorCorreoIA",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * ============================================\n * NODO: ValidadorIA\n * ============================================\n * \n * PROPÓSITO:\n * Valida los datos recolectados usando Gemini AI.\n * Si falta algún dato, genera una pregunta directa para el usuario.\n * \n * INPUT:\n * - update_data: Datos del usuario desde la sesión de Telegram\n * \n * OUTPUT:\n * - valido: boolean\n * - campo_faltante: string | null\n * - pregunta_usuario: string | null\n * - action: 'send_to_central' | 'ask_field' | 'send_to_error_support'\n * \n * CONFIGURACIÓN EN N8N:\n * 1. Agregar nodo \"Google Gemini Chat Model\"\n * 2. Usar este prompt en el nodo \"Basic LLM Chain\" o \"AI Agent\"\n */\n\n// ============================================\n// CÓDIGO PARA EL NODO CODE (post-ValidadorIA)\n// ============================================\n\n// Este código procesa la respuesta de Gemini y decide la acción\n\nconst input = $input.item.json;\nconst respuestaGemini = input.output || input.response || input.text || input;\n\n// Intentar leer datos de prepararDatosIA primero (bypass IA), luego de logicaBot (flujo normal)\nlet datosUsuario;\nlet fuenteDatos = 'unknown';\ntry {\n  datosUsuario = $('prepararDatosIA').first().json.update_data;\n  fuenteDatos = 'prepararDatosIA';\n} catch (e) {\n  try {\n    datosUsuario = $('logicaBot').first().json.update_data || {};\n    fuenteDatos = 'logicaBot';\n  } catch (e2) {\n    datosUsuario = {};\n    fuenteDatos = 'fallback';\n  }\n}\nconsole.log(`📊 Fuente de datos: ${fuenteDatos}`);\n\nconst origen = datosUsuario.origen || 'telegram';\n\n// ============================================\n// SANITIZACIÓN PRE-VALIDACIÓN\n// ============================================\n// Limpiar campos que contienen caracteres sospechosos (inyección de comandos)\n// Si un campo tiene caracteres inválidos, lo ponemos en null para que la IA lo detecte\n\nconst caracteresInvalidos = /[\\.\\/\\+\\&\\%\\@\\#\\$\\!\\?\\*\\<\\>\\|\\\\\\^\\[\\]\\{\\}\\(\\)\\`\\~\\_\\=]/;\n\n// Campos de texto que deben sanitizarse\nconst camposTexto = ['ubicacion_evento', 'nombre_cliente'];\n\nfor (const campo of camposTexto) {\n  if (datosUsuario[campo] && caracteresInvalidos.test(datosUsuario[campo])) {\n    console.log(`⚠️ Campo ${campo} contiene caracteres inválidos: \"${datosUsuario[campo]}\". Marcando como null.`);\n    datosUsuario[`_original_${campo}`] = datosUsuario[campo]; // Guardar original para debug\n    datosUsuario[campo] = null; // La IA detectará que falta\n  }\n  \n  // También detectar si empieza con / (comando)\n  if (datosUsuario[campo] && datosUsuario[campo].startsWith('/')) {\n    console.log(`⚠️ Campo ${campo} parece un comando: \"${datosUsuario[campo]}\". Marcando como null.`);\n    datosUsuario[`_original_${campo}`] = datosUsuario[campo];\n    datosUsuario[campo] = null;\n  }\n}\n\n\n// Parsear respuesta de Gemini si es string\nlet validacion;\ntry {\n  validacion = typeof respuestaGemini === 'string' \n    ? JSON.parse(respuestaGemini.replace(/```json|```/g, '').trim())\n    : respuestaGemini;\n} catch (e) {\n  console.error('Error parseando respuesta de Gemini:', e);\n  // Fallback: asumir que hay error y escalar\n  validacion = {\n    valido: false,\n    campo_faltante: null,\n    pregunta_usuario: null,\n    errores: ['Error procesando validación de IA']\n  };\n}\n\n// Determinar acción\nlet action = 'send_to_central';\nlet next_step = 'completado';\nlet text = '🎉 ¡Excelente! Tu solicitud ha sido enviada.\\n\\nTe hemos enviado un correo de confirmación.';\n\nif (!validacion.valido) {\n  // Guardar errores encontrados por la IA para tracking\n  datosUsuario._errores_ia = validacion.errores || [];\n  \n  if (validacion.campo_faltante && validacion.pregunta_usuario) {\n    // Hay un campo faltante, preguntar al usuario\n    action = 'ask_field';\n    next_step = 'validacion_ia';\n    text = validacion.pregunta_usuario;\n    datosUsuario._campo_pendiente = validacion.campo_faltante;\n    console.log(`❌ Campo faltante: ${validacion.campo_faltante}`);\n  } else {\n    // Error sin campo específico, escalar\n    action = 'send_to_error_support';\n    next_step = 'start';\n    text = '⚠️ Hubo un problema validando tus datos. Un representante te contactará pronto.';\n    console.log('⚠️ Error sin campo específico, escalando a soporte');\n  }\n} else {\n  // Validación exitosa - limpiar campos temporales\n  delete datosUsuario._campo_pendiente;\n  delete datosUsuario._errores_ia;\n  datosUsuario.tipoValidacion = 'IA'; // Marcar que pasó por validación IA\n  console.log('✅ Validación exitosa, limpiando campos temporales');\n}\n\nreturn {\n  // Datos para el siguiente nodo\n  validacion_result: validacion,\n  action: action,\n  next_step: next_step,\n  text: text,\n  update_data: datosUsuario,\n  origen: origen,\n  \n  // Metadata\n  _debug: {\n    respuesta_gemini_raw: respuestaGemini,\n    timestamp: new Date().toISOString()\n  }\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2128,
+        -16
+      ],
+      "id": "95db7ff9-a619-4d2f-9488-a1f148fdff63",
+      "name": " validadorIA"
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * ============================================\n * NODO: adaptarDatosTelegram\n * ============================================\n * \n * PROPÓSITO:\n * Convierte los datos del flujo de Telegram al formato esperado\n * por el flujo web (calcularDias, clasificarUrgencia, etc.)\n * \n * INPUT (desde switchValidacionIA -> Merge):\n * - update_data: Objeto con datos del usuario en formato Telegram\n *   - fecha_evento: \"DD/MM/YYYY\"\n * \n * OUTPUT:\n * - body: Objeto con datos en formato web\n *   - fecha_evento: \"YYYY-MM-DD\"\n * \n * UBICACIÓN EN FLUJO:\n * switchValidacionIA (send_to_central) → adaptarDatosTelegram → Merge → calcularDias\n * \n * AUTOR: Live Moments Team\n * ÚLTIMA ACTUALIZACIÓN: 2025-12-09\n */\n\n// ============================================\n// FUNCIONES AUXILIARES\n// ============================================\n\n/**\n * Convierte fecha de DD/MM/YYYY a YYYY-MM-DD\n * @param {string} fechaDDMMYYYY - Fecha en formato \"DD/MM/YYYY\"\n * @returns {string} Fecha en formato \"YYYY-MM-DD\" o null si inválida\n */\nfunction convertirFechaAISO(fechaDDMMYYYY) {\n  if (!fechaDDMMYYYY || typeof fechaDDMMYYYY !== 'string') {\n    console.warn('⚠️ Fecha vacía o no es string:', fechaDDMMYYYY);\n    return null;\n  }\n  \n  // Si ya está en formato ISO (YYYY-MM-DD), retornar tal cual\n  if (/^\\d{4}-\\d{2}-\\d{2}$/.test(fechaDDMMYYYY)) {\n    console.log('📅 Fecha ya está en formato ISO:', fechaDDMMYYYY);\n    return fechaDDMMYYYY;\n  }\n  \n  // Convertir DD/MM/YYYY a YYYY-MM-DD\n  const partes = fechaDDMMYYYY.split('/');\n  if (partes.length !== 3) {\n    console.warn('⚠️ Formato de fecha no reconocido:', fechaDDMMYYYY);\n    return fechaDDMMYYYY; // Retornar original si no se puede parsear\n  }\n  \n  const [dia, mes, anio] = partes;\n  const fechaISO = `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;\n  \n  console.log(`📅 Fecha convertida: ${fechaDDMMYYYY} → ${fechaISO}`);\n  return fechaISO;\n}\n\n/**\n * Limpia el número de teléfono a solo dígitos con código de país\n * @param {string} telefono - Teléfono en cualquier formato\n * @returns {string} Teléfono limpio\n */\nfunction limpiarTelefono(telefono) {\n  if (!telefono) return '';\n  // Mantener el + si existe, eliminar todo lo demás que no sea dígito\n  const limpio = telefono.replace(/[^\\d+]/g, '');\n  return limpio;\n}\n\n// ============================================\n// LÓGICA PRINCIPAL\n// ============================================\n\nconst input = $input.item.json;\n\n// Los datos vienen en update_data desde el flujo de Telegram\nconst datos = input.update_data || input;\n\n// Validar que tenemos datos\nif (!datos || Object.keys(datos).length === 0) {\n  throw new Error('No se recibieron datos para adaptar');\n}\n\nconsole.log('🔄 Adaptando datos de Telegram a formato web...');\nconsole.log('📊 Datos originales:', JSON.stringify(datos, null, 2));\n\n// Crear objeto en formato compatible con el flujo web\n// El flujo web espera los datos dentro de un objeto \"body\"\nconst datosAdaptados = {\n  body: {\n    // Datos del evento\n    tipo_evento: datos.tipo_evento || null,\n    fecha_evento: convertirFechaAISO(datos.fecha_evento),\n    ubicacion_evento: datos.ubicacion_evento || null,\n    duracion_estimada: datos.duracion_estimada || 'No especificada',\n    tiene_internet_venue: datos.tiene_internet_venue || 'No especificado',\n    \n    // Datos del paquete\n    paquete_interes: datos.paquete_interes || null,\n    add_ons_solicitados: datos.add_ons_solicitados || [],\n    \n    // Datos del cliente\n    nombre_cliente: datos.nombre_cliente || null,\n    email_cliente: datos.email_cliente || null,\n    telefono_cliente: limpiarTelefono(datos.telefono_cliente),\n    \n    // Comentarios\n    comentarios_adicionales: datos.comentarios_adicionales || '',\n    \n    // Metadata de origen (para tracking)\n    origen: datos.origen || 'telegram',\n    tipoValidacion: datos.tipoValidacion || 'IA',\n    \n    // Campos adicionales que podrían venir del bot\n    revision_manual: datos.revision_manual || false\n  }\n};\n\n// Validar campos críticos\nconst camposCriticos = ['tipo_evento', 'fecha_evento', 'nombre_cliente', 'email_cliente'];\nconst camposFaltantes = camposCriticos.filter(campo => !datosAdaptados.body[campo]);\n\nif (camposFaltantes.length > 0) {\n  console.warn(`⚠️ Campos críticos faltantes: ${camposFaltantes.join(', ')}`);\n}\n\nconsole.log('✅ Datos adaptados:', JSON.stringify(datosAdaptados, null, 2));\n\nreturn datosAdaptados;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1440,
+        16
+      ],
+      "id": "3699023f-e648-4733-b362-b27fdd9b3b60",
+      "name": "adaptarDatosTelegram"
+    }
+  ],
+  "pinData": {},
   "connections": {
     "Webhook": {
       "main": [
@@ -908,9 +1624,9 @@
         ],
         [
           {
-            "node": "calcularDias",
+            "node": "Merge",
             "type": "main",
-            "index": 0
+            "index": 1
           }
         ]
       ]
@@ -948,29 +1664,11 @@
         ]
       ]
     },
-    "validarDatos2": {
-      "main": [
-        [
-          {
-            "node": "AI Agent1",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "correoErrorSoporte",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "formularioValido": {
       "main": [
         [
           {
-            "node": "validarDatos2",
+            "node": "existenDatosValidos",
             "type": "main",
             "index": 0
           }
@@ -1087,7 +1785,7 @@
       "ai_languageModel": [
         [
           {
-            "node": "AI Agent1",
+            "node": "generadorCorreoIA",
             "type": "ai_languageModel",
             "index": 0
           }
@@ -1098,19 +1796,8 @@
       "ai_outputParser": [
         [
           {
-            "node": "AI Agent1",
+            "node": "generadorCorreoIA",
             "type": "ai_outputParser",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "AI Agent1": {
-      "main": [
-        [
-          {
-            "node": "¿IA Exitosa?",
-            "type": "main",
             "index": 0
           }
         ]
@@ -1126,13 +1813,277 @@
           }
         ]
       ]
+    },
+    "telegramTrigger": {
+      "main": [
+        [
+          {
+            "node": "buscarSesion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "buscarSesion": {
+      "main": [
+        [
+          {
+            "node": "esNuevoUsuario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "logicaBot": {
+      "main": [
+        [
+          {
+            "node": "switchAccion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "esNuevoUsuario": {
+      "main": [
+        [
+          {
+            "node": "crearSesion",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "esValidacionIA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "crearSesion": {
+      "main": [
+        [
+          {
+            "node": "logicaBot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "capaValidadorIA",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "switchAccion": {
+      "main": [
+        [
+          {
+            "node": "capaValidadorIA",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [],
+        [
+          {
+            "node": "HTTP_Request",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "actualizarSesion",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "correoErrorSoporte",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "esValidacionIA": {
+      "main": [
+        [
+          {
+            "node": "prepararDatosIA",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "logicaBot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "prepararDatosIA": {
+      "main": [
+        [
+          {
+            "node": "capaValidadorIA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "calcularDias",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "validarDatosIA": {
+      "main": [
+        [
+          {
+            "node": "switchValidacionIA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "switchValidacionIA": {
+      "main": [
+        [
+          {
+            "node": "actualizarSesion",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP_Request",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "adaptarDatosTelegram",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "actualizarSesion",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP_Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "correoErrorSoporte",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "existenDatosValidos": {
+      "main": [
+        [
+          {
+            "node": "generadorCorreoIA",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "correoErrorSoporte",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "capaValidadorIA": {
+      "main": [
+        [
+          {
+            "node": " validadorIA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "generadorCorreoIA": {
+      "main": [
+        [
+          {
+            "node": "¿IA Exitosa?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    " validadorIA": {
+      "main": [
+        [
+          {
+            "node": "validarDatosIA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "adaptarDatosTelegram": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "31bf7668-9437-470f-ab7a-5b9924f6849c",
+  "versionId": "2106d9b4-3340-4bbb-b121-49322e8a85a9",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "8db62e2bea7e0e9ff91c93d0f536bbe0241ad88a0b3e2e28d80d2ab1809fb308"

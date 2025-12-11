@@ -1,6 +1,6 @@
 /**
  * ============================================
- * NODO: geminiValidador
+ * NODO: ValidadorIA
  * ============================================
  * 
  * PROPÓSITO:
@@ -22,53 +22,59 @@
  */
 
 // ============================================
-// PROMPT PARA GEMINI
-// ============================================
-
-const PROMPT_VALIDACION = `
-Eres un validador de datos para "Live Moments", un servicio de streaming profesional para eventos.
-
-Tu tarea es validar que los datos de la solicitud estén completos y correctos.
-
-DATOS RECIBIDOS:
-\`\`\`json
-{{JSON_DATOS}}
-\`\`\`
-
-REGLAS DE VALIDACIÓN:
-1. tipo_evento: No debe estar vacío. Valores válidos: "Eventos sociales", "Conferencias y eventos corporativos", "E-Sport y Gaming", "Conciertos y Eventos Artísticos", "Eventos Religiosos", "Eventos Deportivos"
-2. fecha_evento: Formato DD/MM/YYYY o YYYY-MM-DD, debe ser fecha futura
-3. ubicacion_evento: Mínimo 3 caracteres, debe ser una ciudad o dirección real
-4. paquete_interes: Valores válidos: "Básico", "Estándar", "Premium", "Enterprise"
-5. nombre_cliente: Mínimo 3 caracteres, debe parecer un nombre real
-6. email_cliente: Debe ser un email válido (contener @ y dominio)
-7. telefono_cliente: Debe contener números (al menos 7 dígitos)
-
-INSTRUCCIONES:
-- Si TODOS los campos están presentes y válidos, responde con valido: true
-- Si FALTA algún campo o es inválido, identifica EL PRIMER campo con problema
-- Genera una pregunta AMIGABLE y DIRECTA para solicitar ese dato
-- Sé conversacional pero profesional
-
-RESPONDE ÚNICAMENTE EN ESTE FORMATO JSON (sin markdown, sin explicación):
-{
-  "valido": true/false,
-  "campo_faltante": "nombre_del_campo" o null si todo está bien,
-  "pregunta_usuario": "Pregunta amigable para pedir el dato faltante" o null,
-  "errores": ["lista de problemas encontrados"] o []
-}
-`;
-
-// ============================================
-// CÓDIGO PARA EL NODO CODE (post-Gemini)
+// CÓDIGO PARA EL NODO CODE (post-ValidadorIA)
 // ============================================
 
 // Este código procesa la respuesta de Gemini y decide la acción
 
 const input = $input.item.json;
 const respuestaGemini = input.output || input.response || input.text || input;
-const datosUsuario = $('logicaBot').first().json.update_data || {};
+
+// Intentar leer datos de prepararDatosIA primero (bypass IA), luego de logicaBot (flujo normal)
+let datosUsuario;
+let fuenteDatos = 'unknown';
+try {
+  datosUsuario = $('prepararDatosIA').first().json.update_data;
+  fuenteDatos = 'prepararDatosIA';
+} catch (e) {
+  try {
+    datosUsuario = $('logicaBot').first().json.update_data || {};
+    fuenteDatos = 'logicaBot';
+  } catch (e2) {
+    datosUsuario = {};
+    fuenteDatos = 'fallback';
+  }
+}
+console.log(`📊 Fuente de datos: ${fuenteDatos}`);
+
 const origen = datosUsuario.origen || 'telegram';
+
+// ============================================
+// SANITIZACIÓN PRE-VALIDACIÓN
+// ============================================
+// Limpiar campos que contienen caracteres sospechosos (inyección de comandos)
+// Si un campo tiene caracteres inválidos, lo ponemos en null para que la IA lo detecte
+
+const caracteresInvalidos = /[\.\/\+\&\%\@\#\$\!\?\*\<\>\|\\\^\[\]\{\}\(\)\`\~\_\=]/;
+
+// Campos de texto que deben sanitizarse
+const camposTexto = ['ubicacion_evento', 'nombre_cliente'];
+
+for (const campo of camposTexto) {
+  if (datosUsuario[campo] && caracteresInvalidos.test(datosUsuario[campo])) {
+    console.log(`⚠️ Campo ${campo} contiene caracteres inválidos: "${datosUsuario[campo]}". Marcando como null.`);
+    datosUsuario[`_original_${campo}`] = datosUsuario[campo]; // Guardar original para debug
+    datosUsuario[campo] = null; // La IA detectará que falta
+  }
+  
+  // También detectar si empieza con / (comando)
+  if (datosUsuario[campo] && datosUsuario[campo].startsWith('/')) {
+    console.log(`⚠️ Campo ${campo} parece un comando: "${datosUsuario[campo]}". Marcando como null.`);
+    datosUsuario[`_original_${campo}`] = datosUsuario[campo];
+    datosUsuario[campo] = null;
+  }
+}
+
 
 // Parsear respuesta de Gemini si es string
 let validacion;
@@ -93,18 +99,29 @@ let next_step = 'completado';
 let text = '🎉 ¡Excelente! Tu solicitud ha sido enviada.\n\nTe hemos enviado un correo de confirmación.';
 
 if (!validacion.valido) {
+  // Guardar errores encontrados por la IA para tracking
+  datosUsuario._errores_ia = validacion.errores || [];
+  
   if (validacion.campo_faltante && validacion.pregunta_usuario) {
     // Hay un campo faltante, preguntar al usuario
     action = 'ask_field';
     next_step = 'validacion_ia';
     text = validacion.pregunta_usuario;
     datosUsuario._campo_pendiente = validacion.campo_faltante;
+    console.log(`❌ Campo faltante: ${validacion.campo_faltante}`);
   } else {
     // Error sin campo específico, escalar
     action = 'send_to_error_support';
     next_step = 'start';
     text = '⚠️ Hubo un problema validando tus datos. Un representante te contactará pronto.';
+    console.log('⚠️ Error sin campo específico, escalando a soporte');
   }
+} else {
+  // Validación exitosa - limpiar campos temporales
+  delete datosUsuario._campo_pendiente;
+  delete datosUsuario._errores_ia;
+  datosUsuario.tipoValidacion = 'IA'; // Marcar que pasó por validación IA
+  console.log('✅ Validación exitosa, limpiando campos temporales');
 }
 
 return {

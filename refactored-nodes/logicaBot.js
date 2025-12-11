@@ -1,6 +1,6 @@
 /**
  * ============================================
- * NODO: Lógica del Bot de Telegram (State Machine)
+ * NODO: logicaBot (State Machine)
  * ============================================
  * 
  * PROPÓSITO:
@@ -33,7 +33,9 @@ const STEPS = {
   EMAIL: 'email',
   TELEFONO: 'telefono',
   CONFIRMACION: 'confirmacion',
-  VALIDACION_IA: 'validacion_ia',  // Nuevo: validación con Gemini
+  MENU_CORRECCION: 'menu_correccion',      // Nuevo: menú para elegir qué corregir
+  CORRIGIENDO_CAMPO: 'corrigiendo_campo',  // Nuevo: capturando nuevo valor
+  VALIDACION_IA: 'validacion_ia',
   COMPLETADO: 'completado'
 };
 
@@ -69,7 +71,18 @@ const OPTIONS = {
   ],
   CONFIRMACION: [
     [{ text: '✅ Confirmar y Enviar', callback_data: 'confirmar' }],
+    [{ text: '✏️ Corregir un dato', callback_data: 'corregir' }],
     [{ text: '❌ Cancelar', callback_data: 'cancelar' }]
+  ],
+  MENU_CORRECCION: [
+    [{ text: '🎊 Tipo de Evento', callback_data: 'edit_tipo_evento' }],
+    [{ text: '📅 Fecha', callback_data: 'edit_fecha_evento' }],
+    [{ text: '📍 Ciudad', callback_data: 'edit_ubicacion_evento' }],
+    [{ text: '📦 Paquete', callback_data: 'edit_paquete_interes' }],
+    [{ text: '👤 Nombre', callback_data: 'edit_nombre_cliente' }],
+    [{ text: '📧 Email', callback_data: 'edit_email_cliente' }],
+    [{ text: '📞 Teléfono', callback_data: 'edit_telefono_cliente' }],
+    [{ text: '⬅️ Volver al Resumen', callback_data: 'volver_resumen' }]
   ]
 };
 
@@ -99,6 +112,19 @@ const Validators = {
   
   ciudad: (text) => {
     if (!text || text.length < 3) return { valid: false, error: 'Por favor escribe una ciudad válida (mínimo 3 letras).' };
+    
+    // Detectar caracteres sospechosos (posible inyección de comandos)
+    // Permitir: letras, números, espacios, comas, acentos, ñ, guiones simples entre palabras
+    const caracteresInvalidos = /[\.\/\+\&\%\@\#\$\!\?\*\<\>\|\\\^\[\]\{\}\(\)\`\~\_\=]/;
+    if (caracteresInvalidos.test(text)) {
+      return { valid: false, error: 'La ciudad contiene caracteres no válidos. Solo letras, espacios y comas.' };
+    }
+    
+    // Rechazar si empieza con / (comando de bot)
+    if (text.startsWith('/')) {
+      return { valid: false, error: 'Eso parece un comando, no una ciudad. Por favor escribe el nombre de la ciudad.' };
+    }
+    
     return { valid: true, value: text };
   },
   
@@ -120,12 +146,6 @@ const Validators = {
     return { valid: true, value: text };
   }
 };
-
-// ============================================
-// LÓGICA PRINCIPAL
-// ============================================
-
-// ... (Configuración y Validadores igual que antes) ...
 
 // ============================================
 // LÓGICA PRINCIPAL
@@ -195,8 +215,65 @@ let response = {
   next_step: currentStep,
   update_data: currentData,
   action: 'reply',
-  new_intentos: 0 // Por defecto reseteamos intentos si hay éxito
+  new_intentos: 0, // Por defecto reseteamos intentos si hay éxito
+  tipoValidacion: 'BOT' // Por defecto, el bot controla la validación
 };
+
+// Función helper para generar mensaje de resumen según el paso actual
+function generarMensajeResumen(paso, datos) {
+  const resumenDatos = [];
+  if (datos.tipo_evento) resumenDatos.push(`🎊 Evento: ${datos.tipo_evento}`);
+  if (datos.fecha_evento) resumenDatos.push(`📅 Fecha: ${datos.fecha_evento}`);
+  if (datos.ubicacion_evento) resumenDatos.push(`📍 Ciudad: ${datos.ubicacion_evento}`);
+  if (datos.paquete_interes) resumenDatos.push(`📦 Paquete: ${datos.paquete_interes}`);
+  if (datos.nombre_cliente) resumenDatos.push(`👤 Nombre: ${datos.nombre_cliente}`);
+  if (datos.email_cliente) resumenDatos.push(`📧 Email: ${datos.email_cliente}`);
+  
+  const datosStr = resumenDatos.length > 0 ? `**Datos guardados:**\n${resumenDatos.join('\n')}\n\n` : '';
+  
+  const mensajesPorPaso = {
+    [STEPS.FECHA]: '¿Qué tipo de evento deseas transmitir?',
+    [STEPS.CIUDAD]: '📅 ¿Cuál es la fecha del evento? (DD/MM/YYYY)',
+    [STEPS.PAQUETE]: '📍 ¿En qué ciudad será el evento?',
+    [STEPS.NOMBRE]: '📦 Selecciona un paquete:',
+    [STEPS.EMAIL]: '👤 ¿Cuál es tu nombre completo?',
+    [STEPS.TELEFONO]: '📧 ¿Cuál es tu correo electrónico?',
+    [STEPS.CONFIRMACION]: '📞 ¿Cuál es tu número de teléfono?',
+    [STEPS.COMPLETADO]: '¿Confirmas los datos?'
+  };
+  
+  return datosStr + (mensajesPorPaso[paso] || 'Continuemos donde quedamos...');
+}
+
+// Función helper para obtener botones según el paso
+function obtenerBotonesParaPaso(paso) {
+  const botonesPorPaso = {
+    [STEPS.FECHA]: OPTIONS.TIPO_EVENTO,
+    [STEPS.NOMBRE]: OPTIONS.PAQUETE,
+    [STEPS.COMPLETADO]: OPTIONS.CONFIRMACION
+  };
+  return botonesPorPaso[paso] || null;
+}
+
+// Función helper para generar el resumen completo de confirmación
+function generarResumenConfirmacion(datos) {
+  const advertencia = datos.revision_manual ? '\n⚠️ **Nota:** Algunos datos requieren revisión manual.\n' : '';
+  
+  return `
+📋 **RESUMEN DE SOLICITUD**
+${advertencia}
+👤 **Cliente:** ${datos.nombre_cliente || 'No especificado'}
+📧 **Email:** ${datos.email_cliente || 'No especificado'}
+📞 **Tel:** ${datos.telefono_cliente || 'No especificado'}
+
+🎊 **Evento:** ${datos.tipo_evento || 'No especificado'}
+📅 **Fecha:** ${datos.fecha_evento || 'No especificado'}
+📍 **Lugar:** ${datos.ubicacion_evento || 'No especificado'}
+📦 **Paquete:** ${datos.paquete_interes || 'No especificado'}
+
+¿Todo correcto?
+  `.trim();
+}
 
 // Función helper para manejar validación con fallback
 // fieldName: nombre del campo donde guardar el dato (ej: 'fecha_evento', 'nombre_cliente')
@@ -239,6 +316,25 @@ if (incomingText === '/cancelar') {
 }
 
 if (incomingText === '/start' || incomingText === '/reservar') {
+  // Verificar si ya existe una sesión activa con datos
+  const tieneSessionActiva = currentStep !== STEPS.START && Object.keys(currentData).length > 0;
+  
+  if (tieneSessionActiva) {
+    // Ya tiene sesión: NO reiniciar, continuar donde quedó
+    // Incrementar intentos fallidos (el usuario escribió /start en lugar del dato esperado)
+    const mensajeResumen = generarMensajeResumen(currentStep, currentData);
+    
+    return {
+      text: `👋 ¡Hola de nuevo! Veo que ya tenías una reservación en progreso.\n\n${mensajeResumen}`,
+      buttons: obtenerBotonesParaPaso(currentStep),
+      next_step: currentStep,  // Mantener el paso actual
+      update_data: currentData,  // Preservar datos existentes
+      action: 'reply',
+      new_intentos: intentos + 1  // Incrementar intentos
+    };
+  }
+  
+  // No tiene sesión activa: comenzar nuevo flujo
   return {
     text: '👋 ¡Hola! Soy el asistente de Live Moments.\n\n¿Qué tipo de evento deseas transmitir?',
     buttons: OPTIONS.TIPO_EVENTO,
@@ -371,19 +467,139 @@ ${advertencia}
       response.next_step = STEPS.VALIDACION_IA;
       response.update_data.origen = AI_CONFIG.ORIGEN;  // Marcar origen
       response.update_data.intentos_validacion = 0;     // Iniciar contador
+      response.update_data.tipoValidacion = 'IA';       // Marcar que la IA controla
+    } else if (incomingCallback === 'corregir') {
+      // Mostrar menú de campos a corregir
+      response.text = '✏️ ¿Qué dato deseas corregir?';
+      response.buttons = OPTIONS.MENU_CORRECCION;
+      response.next_step = STEPS.MENU_CORRECCION;
     } else if (incomingCallback === 'cancelar') {
       response.text = '🚫 Solicitud cancelada.';
       response.action = 'cancel_session';
     } else {
-      response.text = 'Por favor confirma o cancela usando los botones.';
+      response.text = 'Por favor elige una opción usando los botones.';
       response.buttons = OPTIONS.CONFIRMACION;
+    }
+    break;
+
+  case STEPS.MENU_CORRECCION:
+    // El usuario eligió qué campo corregir
+    if (incomingCallback === 'volver_resumen') {
+      // Volver al resumen sin cambios
+      const d = response.update_data;
+      const resumen = generarResumenConfirmacion(d);
+      response.text = resumen;
+      response.buttons = OPTIONS.CONFIRMACION;
+      response.next_step = STEPS.COMPLETADO;
+    } else if (incomingCallback && incomingCallback.startsWith('edit_')) {
+      // Extraer el nombre del campo a editar
+      const campoEditar = incomingCallback.replace('edit_', '');
+      response.update_data._campo_editando = campoEditar;
+      
+      // Mostrar mensaje según el campo
+      const mensajesEdicion = {
+        'tipo_evento': '🎊 Selecciona el nuevo tipo de evento:',
+        'fecha_evento': '📅 Escribe la nueva fecha (DD/MM/YYYY):',
+        'ubicacion_evento': '📍 Escribe la nueva ciudad:',
+        'paquete_interes': '📦 Selecciona el nuevo paquete:',
+        'nombre_cliente': '👤 Escribe tu nombre completo:',
+        'email_cliente': '📧 Escribe tu correo electrónico:',
+        'telefono_cliente': '📞 Escribe tu número de teléfono:'
+      };
+      
+      response.text = mensajesEdicion[campoEditar] || 'Escribe el nuevo valor:';
+      response.next_step = STEPS.CORRIGIENDO_CAMPO;
+      
+      // Si es tipo_evento o paquete, mostrar botones
+      if (campoEditar === 'tipo_evento') {
+        response.buttons = OPTIONS.TIPO_EVENTO;
+      } else if (campoEditar === 'paquete_interes') {
+        response.buttons = OPTIONS.PAQUETE;
+      }
+    } else {
+      response.text = '⚠️ Por favor selecciona una opción del menú.';
+      response.buttons = OPTIONS.MENU_CORRECCION;
+    }
+    break;
+
+  case STEPS.CORRIGIENDO_CAMPO:
+    // El usuario está ingresando el nuevo valor del campo
+    const campoEditando = currentData._campo_editando;
+    const nuevoValor = incomingCallback || incomingText;
+    
+    if (campoEditando && nuevoValor) {
+      // Validar el nuevo valor según el campo
+      let valorValidado = nuevoValor;
+      let esValido = true;
+      
+      // Aplicar validador correspondiente
+      if (campoEditando === 'fecha_evento') {
+        const resultado = Validators.fecha(nuevoValor);
+        esValido = resultado.valid;
+        if (!esValido) {
+          response.text = `❌ ${resultado.error}\n\nIntenta de nuevo:`;
+          response.next_step = STEPS.CORRIGIENDO_CAMPO;
+          break;
+        }
+        valorValidado = resultado.value;
+      } else if (campoEditando === 'ubicacion_evento') {
+        const resultado = Validators.ciudad(nuevoValor);
+        esValido = resultado.valid;
+        if (!esValido) {
+          response.text = `❌ ${resultado.error}\n\nIntenta de nuevo:`;
+          response.next_step = STEPS.CORRIGIENDO_CAMPO;
+          break;
+        }
+        valorValidado = resultado.value;
+      } else if (campoEditando === 'nombre_cliente') {
+        const resultado = Validators.nombre(nuevoValor);
+        esValido = resultado.valid;
+        if (!esValido) {
+          response.text = `❌ ${resultado.error}\n\nIntenta de nuevo:`;
+          response.next_step = STEPS.CORRIGIENDO_CAMPO;
+          break;
+        }
+        valorValidado = resultado.value;
+      } else if (campoEditando === 'email_cliente') {
+        const resultado = Validators.email(nuevoValor);
+        esValido = resultado.valid;
+        if (!esValido) {
+          response.text = `❌ ${resultado.error}\n\nIntenta de nuevo:`;
+          response.next_step = STEPS.CORRIGIENDO_CAMPO;
+          break;
+        }
+        valorValidado = resultado.value;
+      } else if (campoEditando === 'telefono_cliente') {
+        const resultado = Validators.telefono(nuevoValor);
+        esValido = resultado.valid;
+        if (!esValido) {
+          response.text = `❌ ${resultado.error}\n\nIntenta de nuevo:`;
+          response.next_step = STEPS.CORRIGIENDO_CAMPO;
+          break;
+        }
+        valorValidado = resultado.value;
+      }
+      
+      // Guardar el nuevo valor
+      response.update_data[campoEditando] = valorValidado;
+      delete response.update_data._campo_editando;
+      
+      // Volver al resumen
+      const d = response.update_data;
+      const resumen = `✅ **Dato actualizado**\n\n${generarResumenConfirmacion(d)}`;
+      response.text = resumen;
+      response.buttons = OPTIONS.CONFIRMACION;
+      response.next_step = STEPS.COMPLETADO;
+    } else {
+      response.text = '⚠️ No recibí un valor válido. Por favor intenta de nuevo.';
+      response.next_step = STEPS.CORRIGIENDO_CAMPO;
     }
     break;
 
   case STEPS.VALIDACION_IA:
     // Este paso maneja respuestas a preguntas de la IA sobre campos faltantes
     const campoFaltante = currentData._campo_pendiente;
-    const intentos = parseInt(currentData.intentos_validacion || 0);
+    const intentosIA = parseInt(currentData.intentos_validacion || 0);
     
     if (campoFaltante && incomingText) {
       // Guardamos la respuesta en el campo correspondiente
@@ -391,10 +607,10 @@ ${advertencia}
       delete response.update_data._campo_pendiente;
       
       // Incrementar contador de intentos
-      response.update_data.intentos_validacion = intentos + 1;
+      response.update_data.intentos_validacion = intentosIA + 1;
       
       // Verificar límite de intentos
-      if (intentos + 1 >= AI_CONFIG.MAX_INTENTOS) {
+      if (intentosIA + 1 >= AI_CONFIG.MAX_INTENTOS) {
         response.text = '⚠️ Se alcanzó el límite de validaciones. Tu solicitud será revisada manualmente.';
         response.action = 'send_to_error_support';  // Escalar a soporte
         response.update_data.requiere_revision = true;
