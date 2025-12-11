@@ -138,16 +138,31 @@ function generarMetadata(dias, fechaEvento, fechaActual) {
 // ============================================
 
 try {
-  // Obtener datos del input (Webhook envía datos en .body)
-  const input = $input.item.json.body;
+  // Obtener datos del input
+  const input = $input.item.json;
   
-  // Validar que tenemos los datos necesarios
-  if (!input) {
-    throw new Error('No se recibieron datos del webhook');
+  // ESTRATEGIA DE MIGRACIÓN:
+  // Intentar leer del Modelo Canónico (UDO) primero
+  // Si no, fallback al modelo antiguo (Webhook plano)
+  
+  let fechaEventoString;
+  
+  if (input.evento && input.evento.fecha) {
+    // Caso 1: Nuevo Modelo Canónico
+    fechaEventoString = input.evento.fecha;
+    console.log('✅ Usando Modelo Canónico (UDO)');
+  } else if (input.body && input.body.fecha_evento) {
+    // Caso 2: Modelo Antiguo (Webhook)
+    fechaEventoString = input.body.fecha_evento;
+    console.log('⚠️ Usando Modelo Legacy (Webhook)');
+  } else if (input.fecha_evento) {
+    // Caso 3: Plano directo (Legacy)
+    fechaEventoString = input.fecha_evento;
   }
   
-  if (!input.fecha_evento) {
-    throw new Error('El campo "fecha_evento" es requerido');
+  // Validar fecha
+  if (!fechaEventoString) {
+    throw new Error('El campo "evento.fecha" (o fecha_evento) es requerido');
   }
   
   // Parsear fecha del evento

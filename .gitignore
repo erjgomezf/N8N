@@ -248,7 +248,8 @@ $RECYCLE.BIN/
 *.lnk
 
 #Flujos de N8N
-workflow_streaming.json
+workflows/*.json
 telegram_bot_workflow.json
+workflow_streaming.json
 
 # End of https://www.toptal.com/developers/gitignore/api/linux,windows,macos,python

@@ -83,49 +83,56 @@ if (!datos || Object.keys(datos).length === 0) {
   throw new Error('No se recibieron datos para adaptar');
 }
 
-console.log('🔄 Adaptando datos de Telegram a formato web...');
-console.log('📊 Datos originales:', JSON.stringify(datos, null, 2));
+console.log('🔄 Adaptando datos de Telegram a Modelo Canónico (UDO)...');
 
-// Crear objeto en formato compatible con el flujo web
-// El flujo web espera los datos dentro de un objeto "body"
-const datosAdaptados = {
-  body: {
-    // Datos del evento
-    tipo_evento: datos.tipo_evento || null,
-    fecha_evento: convertirFechaAISO(datos.fecha_evento),
-    ubicacion_evento: datos.ubicacion_evento || null,
-    duracion_estimada: datos.duracion_estimada || 'No especificada',
-    tiene_internet_venue: datos.tiene_internet_venue || 'No especificado',
-    
-    // Datos del paquete
-    paquete_interes: datos.paquete_interes || null,
-    add_ons_solicitados: datos.add_ons_solicitados || [],
-    
-    // Datos del cliente
-    nombre_cliente: datos.nombre_cliente || null,
-    email_cliente: datos.email_cliente || null,
-    telefono_cliente: limpiarTelefono(datos.telefono_cliente),
-    
-    // Comentarios
-    comentarios_adicionales: datos.comentarios_adicionales || '',
-    
-    // Metadata de origen (para tracking)
+// Mapeo seguro de campos con valores por defecto
+const datosCanonicos = {
+  // 1. DATOS DEL CLIENTE
+  cliente: {
+    nombre: datos.nombre_cliente || "Cliente Desconocido",
+    email: datos.email_cliente || "no-email@registrado.com",
+    telefono: limpiarTelefono(datos.telefono_cliente) || null,
+    idioma: "es"
+  },
+
+  // 2. DATOS DEL EVENTO
+  evento: {
+    tipo: datos.tipo_evento || "No especificado",
+    fecha: convertirFechaAISO(datos.fecha_evento), // YYYY-MM-DD
+    ubicacion: datos.ubicacion_evento || "No especificada",
+    venue_tiene_internet: datos.tiene_internet_venue === 'Sí', // Normalizar a booleano
+    duracion_horas: parseInt(datos.duracion_estimada) || 4
+  },
+
+  // 3. DATOS COMERCIALES
+  venta: {
+    paquete: datos.paquete_interes || "Básico",
+    addons: datos.add_ons_solicitados || [],
+    presupuesto_estimado: null,
+    moneda: "USD"
+  },
+
+  // 4. METADATOS
+  metadata: {
     origen: datos.origen || 'telegram',
-    tipoValidacion: datos.tipoValidacion || 'IA',
-    
-    // Campos adicionales que podrían venir del bot
-    revision_manual: datos.revision_manual || false
+    canal_id: input.chat_id || datos.chat_id || 'unknown',
+    timestamp_ingreso: new Date().toISOString(),
+    version_schema: "2.0", // Versión Canónica
+    validacion_ia_usada: datos.tipoValidacion === 'IA',
+    intentos_validacion: parseInt(datos.intentos_validacion || 0)
+  },
+
+  // 5. FLAGS
+  flags: {
+    es_prueba: false,
+    requiere_revision_humana: datos.revision_manual || false
   }
 };
 
-// Validar campos críticos
-const camposCriticos = ['tipo_evento', 'fecha_evento', 'nombre_cliente', 'email_cliente'];
-const camposFaltantes = camposCriticos.filter(campo => !datosAdaptados.body[campo]);
-
-if (camposFaltantes.length > 0) {
-  console.warn(`⚠️ Campos críticos faltantes: ${camposFaltantes.join(', ')}`);
+// Validación final de campos críticos para el Core
+if (!datosCanonicos.evento.fecha) {
+  console.warn('⚠️ Fecha de evento inválida o faltante adaptando Telegram');
 }
 
-console.log('✅ Datos adaptados:', JSON.stringify(datosAdaptados, null, 2));
-
-return datosAdaptados;
+console.log('✅ Transformación Canónica Exitosa');
+return datosCanonicos;

@@ -167,9 +167,24 @@ function clasificarPorCriterios(dias, paquete, tipoEvento) {
 const input = $input.item.json;
 
 // Extraer variables necesarias
-const dias = input.dias_del_evento;
-const paquete = input.paquete_interes;
-const tipoEvento = input.tipo_evento;
+// Extraer variables necesarias con soporte para Modelo Canónico y Legacy
+const dias = input.dias_del_evento; // Este campo lo agrega calcularDias, sigue igual
+
+let paquete, tipoEvento;
+
+if (input.venta && input.evento) {
+  // Modelo Canónico
+  paquete = input.venta.paquete;
+  tipoEvento = input.evento.tipo;
+} else if (input.body) {
+  // Modelo Webhook Legacy
+  paquete = input.body.paquete_interes;
+  tipoEvento = input.body.tipo_evento;
+} else {
+  // Fallback plano
+  paquete = input.paquete_interes;
+  tipoEvento = input.tipo_evento;
+}
 
 // Validar que tenemos los datos necesarios
 if (typeof dias !== 'number' || !paquete || !tipoEvento) {
