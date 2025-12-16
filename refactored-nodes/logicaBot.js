@@ -35,6 +35,12 @@ const STEPS = {
   CONFIRMACION: 'confirmacion',
   MENU_CORRECCION: 'menu_correccion',      // Nuevo: menú para elegir qué corregir
   CORRIGIENDO_CAMPO: 'corrigiendo_campo',  // Nuevo: capturando nuevo valor
+  
+  // Nuevos pasos Canónicos (UDO)
+  DURACION: 'duracion',
+  INTERNET: 'internet',
+  ADDONS: 'addons',
+  COMENTARIOS: 'comentarios',
   VALIDACION_IA: 'validacion_ia',
   COMPLETADO: 'completado'
 };
@@ -372,7 +378,7 @@ switch (currentStep) {
     handleValidation(
       Validators.fecha(incomingText), 
       incomingText, 
-      STEPS.PAQUETE, 
+      STEPS.UBICACION, 
       '📍 ¿En qué ciudad será el evento?',
       'fecha_evento'  // <-- Campo donde guardar
     );

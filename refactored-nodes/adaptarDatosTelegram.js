@@ -100,8 +100,9 @@ const datosCanonicos = {
     tipo: datos.tipo_evento || "No especificado",
     fecha: convertirFechaAISO(datos.fecha_evento), // YYYY-MM-DD
     ubicacion: datos.ubicacion_evento || "No especificada",
-    venue_tiene_internet: datos.tiene_internet_venue === 'Sí', // Normalizar a booleano
-    duracion_horas: parseInt(datos.duracion_estimada) || 4
+    venue_tiene_internet: datos.tiene_internet_venue === 'si' || datos.tiene_internet_venue === true, // Normalizar a booleano
+    duracion_horas: parseInt(datos.duracion_estimada) || 4,
+    comentarios: datos.comentarios_adicionales || "Ninguno"
   },
 
   // 3. DATOS COMERCIALES
