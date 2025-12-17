@@ -28,6 +28,7 @@ const STEPS = {
   TIPO_EVENTO: 'tipo_evento',
   FECHA: 'fecha',
   CIUDAD: 'ciudad',
+  UBICACION: 'ubicacion',  // Fix: Paso faltante que causaba el reset
   PAQUETE: 'paquete',
   NOMBRE: 'nombre',
   EMAIL: 'email',
@@ -70,10 +71,10 @@ const OPTIONS = {
     [{ text: '⚽ Deportivos', callback_data: 'Eventos Deportivos' }]
   ],
   PAQUETE: [
-    [{ text: '🥉 Básico (1 Cam)', callback_data: 'Básico' }],
-    [{ text: '🥈 Estándar (2 Cam)', callback_data: 'Estándar' }],
-    [{ text: '🥇 Premium (3 Cam)', callback_data: 'Premium' }],
-    [{ text: '💎 Enterprise (4K)', callback_data: 'Enterprise' }]
+    [{ text: '🥉 Básico - 1 cámara HD', callback_data: 'Básico' }],
+    [{ text: '🥈 Estándar - 2 cámaras HD + overlays básicos', callback_data: 'Estándar' }],
+    [{ text: '🥇 Premium - 3 cámaras HD + director técnico', callback_data: 'Premium' }],
+    [{ text: '💎 Enterprise - 4 cámaras 4K + multi-plataforma', callback_data: 'Enterprise' }]
   ],
   CONFIRMACION: [
     [{ text: '✅ Confirmar y Enviar', callback_data: 'confirmar' }],
@@ -89,6 +90,12 @@ const OPTIONS = {
     [{ text: '📧 Email', callback_data: 'edit_email_cliente' }],
     [{ text: '📞 Teléfono', callback_data: 'edit_telefono_cliente' }],
     [{ text: '⬅️ Volver al Resumen', callback_data: 'volver_resumen' }]
+  ],
+  DURACION: [
+    [{ text: '⏱️ 2 a 4 horas', callback_data: 'duracion_2_4' }],
+    [{ text: '📆 8 horas', callback_data: 'duracion_8' }],
+    [{ text: '☀️ Todo el día', callback_data: 'duracion_dia' }],
+    [{ text: '📅 Varios días', callback_data: 'duracion_varios' }]
   ]
 };
 
@@ -384,85 +391,209 @@ switch (currentStep) {
     );
     break;
 
-  case STEPS.PAQUETE:
-    // Input anterior: CIUDAD
+  case STEPS.UBICACION:
+    // Input anterior: CIUDAD (Texto libre)
     handleValidation(
       Validators.ciudad(incomingText),
       incomingText,
-      STEPS.NOMBRE,
-      '📦 Selecciona un paquete:',
-      'ubicacion_evento'  // <-- Campo donde guardar
+      STEPS.DURACION,
+      '⏱️ ¿Cuál es la duración estimada del evento?',
+      'ubicacion_evento'
     );
-    if (response.next_step === STEPS.NOMBRE) {
-        response.buttons = OPTIONS.PAQUETE;
+    // Agregar botones de duración si la validación fue exitosa
+    if (response.next_step === STEPS.DURACION) {
+      response.buttons = OPTIONS.DURACION;
     }
     break;
 
-  case STEPS.NOMBRE:
-    // Input anterior: PAQUETE (Callback)
+  case STEPS.DURACION:
+    // Input anterior: Callback de botones de duración
     if (incomingCallback) {
-      response.update_data.paquete_interes = incomingCallback;
-      response.text = `✅ Paquete: ${incomingCallback}\n\n👤 ¿Cuál es tu nombre completo?`;
-      response.next_step = STEPS.EMAIL;
+      const mapaDuracion = {
+        'duracion_2_4': '2 a 4 horas',
+        'duracion_8': '8 horas',
+        'duracion_dia': 'Todo el día',
+        'duracion_varios': 'Varios días'
+      };
+      const duracionSeleccionada = mapaDuracion[incomingCallback];
+      
+      if (duracionSeleccionada) {
+        response.update_data.duracion_estimada = duracionSeleccionada;
+        response.text = `✅ Duración: ${duracionSeleccionada}\n\n📡 ¿El lugar cuenta con conexión a Internet estable para streaming?`;
+        response.buttons = [
+          [{ text: '✅ Sí, tiene internet', callback_data: 'internet_si' }],
+          [{ text: '❌ No tiene / No estoy seguro', callback_data: 'internet_no' }]
+        ];
+        response.next_step = STEPS.INTERNET;
+      } else {
+        response.text = '⚠️ Por favor selecciona una opción usando los botones.';
+        response.buttons = OPTIONS.DURACION;
+      }
     } else {
-      response.text = '⚠️ Por favor selecciona un paquete usando los botones.';
-      response.buttons = OPTIONS.PAQUETE;
+      response.text = '⚠️ Por favor selecciona la duración usando los botones.';
+      response.buttons = OPTIONS.DURACION;
     }
     break;
 
-  case STEPS.EMAIL:
-    // Input anterior: NOMBRE
-    handleValidation(
-      Validators.nombre(incomingText),
-      incomingText,
-      STEPS.TELEFONO,
-      '📧 ¿Cuál es tu correo electrónico?',
-      'nombre_cliente'  // <-- Campo donde guardar
-    );
-    break;
-
-  case STEPS.TELEFONO:
-    // Input anterior: EMAIL
-    handleValidation(
-      Validators.email(incomingText),
-      incomingText,
-      STEPS.CONFIRMACION,
-      '📞 ¿Cuál es tu número de teléfono?',
-      'email_cliente'  // <-- Campo donde guardar
-    );
-    break;
-
-  case STEPS.CONFIRMACION:
-    // Input anterior: TELEFONO
-    const validado = handleValidation(
-      Validators.telefono(incomingText),
-      incomingText,
-      STEPS.COMPLETADO,
-      '', // El mensaje se genera abajo
-      'telefono_cliente'  // <-- Campo donde guardar
-    );
-    
-    if (validado) {
-      const d = response.update_data;
-      const advertencia = d.revision_manual ? '\n⚠️ **Nota:** Algunos datos requieren revisión manual.\n' : '';
+  case STEPS.INTERNET:
+    // Input anterior: Callback de botones Sí/No internet
+    if (incomingCallback) {
+      const tieneInternet = incomingCallback === 'internet_si';
+      response.update_data.tiene_internet_venue = tieneInternet ? 'Sí' : 'No';
       
-      const resumen = `
+      response.text = `✅ Internet: ${tieneInternet ? 'Sí' : 'No'}\n\n📦 Ahora selecciona el paquete de tu interés:`;
+      response.buttons = OPTIONS.PAQUETE;
+      response.next_step = STEPS.PAQUETE;
+    } else {
+      response.text = '⚠️ Por favor selecciona una opción usando los botones.';
+      response.buttons = [
+        [{ text: '✅ Sí, tiene internet', callback_data: 'internet_si' }],
+        [{ text: '❌ No tiene / No estoy seguro', callback_data: 'internet_no' }]
+      ];
+    }
+    break;
+
+  case STEPS.ADDONS:
+    // Loop: el usuario puede seleccionar múltiples addons
+    let addonsActuales = currentData.add_ons_solicitados || [];
+    
+    if (incomingCallback === 'addon_listo') {
+      // Terminar selección de addons
+      const addonsTexto = addonsActuales.length > 0 ? addonsActuales.join(', ') : 'Ninguno';
+      response.text = `✅ Servicios adicionales: ${addonsTexto}\n\n👤 ¿Cuál es tu nombre completo?`;
+      response.next_step = STEPS.NOMBRE;
+    } else if (incomingCallback && incomingCallback.startsWith('addon_')) {
+      // Mapa de etiquetas para guardar nombres bonitos
+      const mapaAddons = {
+        'addon_drone': 'Drone',
+        'addon_camara': 'Cámara Adicional',
+        'addon_highlights': 'Edición Highlights'
+      };
+      
+      const addonSeleccionado = mapaAddons[incomingCallback];
+      if (addonSeleccionado && !addonsActuales.includes(addonSeleccionado)) {
+        addonsActuales.push(addonSeleccionado);
+        response.update_data.add_ons_solicitados = addonsActuales;
+        response.text = `✅ Agregado: ${addonSeleccionado}\n\n¿Deseas agregar otro?`;
+      } else if (addonsActuales.includes(addonSeleccionado)) {
+        response.text = `El servicio ya estaba seleccionado.\n\n¿Deseas agregar otro?`;
+      }
+      
+      // Repetir botones (mantenerse en el mismo paso)
+      response.buttons = [
+        [{ text: '🚁 Drone (Cobertura Aérea)', callback_data: 'addon_drone' }],
+        [{ text: '📹 Cámara Adicional', callback_data: 'addon_camara' }],
+        [{ text: '🎬 Edición de Highlights', callback_data: 'addon_highlights' }],
+        [{ text: '✅ Listo, continuar', callback_data: 'addon_listo' }]
+      ];
+      response.next_step = STEPS.ADDONS;
+    } else {
+      response.text = '⚠️ Por favor selecciona una opción usando los botones.';
+      response.buttons = [
+        [{ text: '🚁 Drone (Cobertura Aérea)', callback_data: 'addon_drone' }],
+        [{ text: '📹 Cámara Adicional', callback_data: 'addon_camara' }],
+        [{ text: '🎬 Edición de Highlights', callback_data: 'addon_highlights' }],
+        [{ text: '✅ Listo, continuar', callback_data: 'addon_listo' }]
+      ];
+      response.next_step = STEPS.ADDONS;
+    }
+    break;
+
+  case STEPS.COMENTARIOS:
+    // Input anterior: Texto libre de comentarios (después de TELEFONO)
+    response.update_data.comentarios_adicionales = incomingText || 'Ninguno';
+    
+    // Mostrar resumen de confirmación
+    const d = response.update_data;
+    const advertencia = d.revision_manual ? '\n⚠️ **Nota:** Algunos datos requieren revisión manual.\n' : '';
+    const addonsResumen = Array.isArray(d.add_ons_solicitados) && d.add_ons_solicitados.length > 0 
+      ? d.add_ons_solicitados.join(', ') 
+      : 'Ninguno';
+    
+    const resumenFinal = `
 📋 **RESUMEN DE SOLICITUD**
 ${advertencia}
 👤 **Cliente:** ${d.nombre_cliente}
 📧 **Email:** ${d.email_cliente}
 📞 **Tel:** ${d.telefono_cliente}
 
-🎊 **Evento:** ${d.tipo_evento}
+🎉 **Evento:** ${d.tipo_evento}
 📅 **Fecha:** ${d.fecha_evento}
 📍 **Lugar:** ${d.ubicacion_evento}
+⏱️ **Duración:** ${d.duracion_estimada || 'No especificada'}
+📡 **Internet:** ${d.tiene_internet_venue || 'No especificado'}
 📦 **Paquete:** ${d.paquete_interes}
+✨ **Addons:** ${addonsResumen}
+📝 **Comentarios:** ${d.comentarios_adicionales || 'Ninguno'}
 
 ¿Todo correcto?
-      `;
-      response.text = resumen;
-      response.buttons = OPTIONS.CONFIRMACION;
+    `.trim();
+    
+    response.text = resumenFinal;
+    response.buttons = OPTIONS.CONFIRMACION;
+    response.next_step = STEPS.COMPLETADO;
+    break;
+
+  case STEPS.PAQUETE:
+    // Input anterior: INTERNET (Callback de botón de paquete)
+    if (incomingCallback) {
+      response.update_data.paquete_interes = incomingCallback;
+      response.text = `✅ Paquete: ${incomingCallback}\n\n✨ ¿Deseas agregar algún servicio adicional?`;
+      response.buttons = [
+        [{ text: '🚁 Drone (Cobertura Aérea)', callback_data: 'addon_drone' }],
+        [{ text: '📹 Cámara Adicional', callback_data: 'addon_camara' }],
+        [{ text: '🎬 Edición de Highlights', callback_data: 'addon_highlights' }],
+        [{ text: '✅ Listo, continuar', callback_data: 'addon_listo' }]
+      ];
+      response.next_step = STEPS.ADDONS;
+      
+      // Inicializar array de addons
+      if (!response.update_data.add_ons_solicitados) {
+        response.update_data.add_ons_solicitados = [];
+      }
+    } else {
+      response.text = '⚠️ Por favor selecciona un paquete usando los botones.';
+      response.buttons = OPTIONS.PAQUETE;
     }
+    break;
+
+  case STEPS.NOMBRE:
+    // PASO NOMBRE: Recibimos el nombre, pedimos email
+    // Input: Nombre del usuario (desde ADDONS)
+    // Output: Guardar nombre, pedir email
+    handleValidation(
+      Validators.nombre(incomingText),
+      incomingText,
+      STEPS.EMAIL,
+      '📧 ¿Cuál es tu correo electrónico?',
+      'nombre_cliente'
+    );
+    break;
+
+  case STEPS.EMAIL:
+    // PASO EMAIL: Recibimos el email, pedimos teléfono
+    // Input: Email del usuario (desde NOMBRE)
+    // Output: Guardar email, pedir teléfono
+    handleValidation(
+      Validators.email(incomingText),
+      incomingText,
+      STEPS.TELEFONO,
+      '📞 ¿Cuál es tu número de teléfono?',
+      'email_cliente'
+    );
+    break;
+
+  case STEPS.TELEFONO:
+    // PASO TELEFONO: Recibimos el teléfono, pedimos comentarios
+    // Input: Teléfono del usuario (desde EMAIL)
+    // Output: Guardar teléfono, pedir comentarios
+    handleValidation(
+      Validators.telefono(incomingText),
+      incomingText,
+      STEPS.COMENTARIOS,
+      '📝 ¿Tienes algún comentario adicional o requerimiento especial?\n\n(Escribe "Ninguno" si no tienes)',
+      'telefono_cliente'
+    );
     break;
 
   case STEPS.COMPLETADO:

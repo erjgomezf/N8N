@@ -1,0 +1,30 @@
+{{
+  (() => {
+    // Determinar de dónde vienen los botones (si hay)
+    const buttons = $if(
+      $('switchAccion').isExecuted,
+      $('switchAccion').item.json.buttons,
+      null
+    );
+    
+    // Determinar el texto - puede venir de switchAccion O de ValidadorIA
+    const texto = $if(
+      $(' validadorIA').isExecuted,
+      $(' validadorIA').item.json.text,
+      $('switchAccion').item.json.text
+    );
+    
+    // Objeto base
+    const body = {
+      "chat_id": $('telegramTrigger').item.json.message?.chat?.id || $('telegramTrigger').item.json.callback_query?.message?.chat?.id,
+      "text": texto
+    };
+    // Solo agregar reply_markup si hay botones válidos
+    if (buttons && Array.isArray(buttons) && buttons.length > 0) {
+      body.reply_markup = {
+        "inline_keyboard": buttons
+      };
+    }
+    return body;
+  })()
+}}

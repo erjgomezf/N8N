@@ -120,6 +120,12 @@ if (!validacion.valido) {
   // Validación exitosa - limpiar campos temporales
   delete datosUsuario._campo_pendiente;
   delete datosUsuario._errores_ia;
+  
+  // Limpiar campos de debug de sanitización
+  for (const campo of camposTexto) {
+    delete datosUsuario[`_original_${campo}`];
+  }
+  
   datosUsuario.tipoValidacion = 'IA'; // Marcar que pasó por validación IA
   console.log('✅ Validación exitosa, limpiando campos temporales');
 }

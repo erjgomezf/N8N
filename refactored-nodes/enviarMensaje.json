@@ -1,0 +1,14 @@
+{{
+  (() => {
+    const cmd = $('detectarComando').item.json;
+    const body = {
+      "chat_id": cmd.chat_id,
+      "text": cmd.mensaje,
+      "parse_mode": "Markdown"
+    };
+    if (cmd.buttons && cmd.buttons.length > 0) {
+      body.reply_markup = { "inline_keyboard": cmd.buttons };
+    }
+    return body;
+  })()
+}}
