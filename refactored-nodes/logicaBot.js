@@ -611,8 +611,13 @@ ${advertencia}
       response.buttons = OPTIONS.MENU_CORRECCION;
       response.next_step = STEPS.MENU_CORRECCION;
     } else if (incomingCallback === 'cancelar') {
-      response.text = '🚫 Solicitud cancelada.';
-      response.action = 'cancel_session';
+      // Mostrar confirmación antes de cancelar (igual que /cancelar)
+      response.text = '⚠️ ¿Estás seguro de que deseas cancelar tu reservación?\n\nEsta acción no se puede deshacer.';
+      response.buttons = [
+        [{ text: '✅ Sí, cancelar', callback_data: 'ejecutar_cancelar' }],
+        [{ text: '❌ No, mantener', callback_data: 'mantener_reservacion' }]
+      ];
+      response.action = 'confirmar_cancelacion';
     } else {
       response.text = 'Por favor elige una opción usando los botones.';
       response.buttons = OPTIONS.CONFIRMACION;

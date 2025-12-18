@@ -55,8 +55,7 @@ if (esComando) {
       resultado.mensaje = `📋 Ya tienes una reservación activa:\n\n🎉 Evento: ${datosJson.tipo_evento}\n📅 Fecha: ${datosJson.fecha_evento}\n📍 Lugar: ${datosJson.ubicacion_evento}\n📦 Paquete: ${datosJson.paquete_interes}\n\n¿Qué deseas hacer?`;
       resultado.buttons = [
         [{ text: '📄 Ver detalles completos', callback_data: 'ver_detalles' }],
-        [{ text: '🗑️ Cancelar reservación', callback_data: 'confirmar_cancelar' }],
-        [{ text: '📞 Contactar soporte', callback_data: 'contactar_soporte' }]
+        [{ text: '🗑️ Cancelar reservación', callback_data: 'confirmar_cancelar' }]
       ];
       resultado.datos_reservacion = datosJson;
       
@@ -90,14 +89,23 @@ if (esComando) {
     
   } else if (comando === '/ayuda') {
     resultado.accion = 'mostrar_ayuda';
-    resultado.mensaje = `🆘 **Ayuda - Live Moments Bot**\n\nComandos disponibles:\n• /start - Iniciar o ver reservación\n• /reservar - Nueva reservación\n• /cancelar - Cancelar reservación\n• /ayuda - Este mensaje\n\n¿Necesitas más ayuda? Escribe "soporte" para contactar a un humano.`;
+    resultado.mensaje = `🆘 **Ayuda - Live Moments Bot**\n\nComandos disponibles:\n• /start - Iniciar o ver reservación\n• /reservar - Nueva reservación\n• /cancelar - Cancelar reservación\n• /ayuda - Este mensaje`;
   }
 }
 
 // También manejar callbacks de confirmación
 const callback = telegramData.callback_query?.data;
 
-if (callback === 'ejecutar_cancelar') {
+if (callback === 'confirmar_cancelar') {
+  // Mostrar confirmación antes de cancelar
+  resultado.accion = 'confirmar_cancelacion';
+  resultado.mensaje = '⚠️ ¿Estás seguro de que deseas cancelar tu reservación?\n\nEsta acción no se puede deshacer.';
+  resultado.buttons = [
+    [{ text: '✅ Sí, cancelar', callback_data: 'ejecutar_cancelar' }],
+    [{ text: '❌ No, mantener', callback_data: 'mantener_reservacion' }]
+  ];
+
+} else if (callback === 'ejecutar_cancelar') {
   resultado.accion = 'cancelar_sesion';
   resultado.mensaje = '🗑️ Tu reservación ha sido cancelada.\n\nEscribe /reservar para comenzar una nueva.';
   
