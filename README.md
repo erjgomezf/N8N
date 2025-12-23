@@ -1,240 +1,272 @@
-# 🎬 Live Moments - Sistema de Captura de Leads
+# 🎥 Live Moments - Bot de Reservaciones Telegram
 
-Sistema automatizado de captura y procesamiento de solicitudes de servicios de streaming para eventos, implementado con N8N y formulario web interactivo.
+## Estado del Proyecto: ✅ FUNCIONAL (v2.0 - Diciembre 2024)
 
----
-
-## 📋 Descripción
-
-Este proyecto es un sistema completo de captura de leads que incluye:
-- Formulario web multi-paso con validación en tiempo real
-- Workflow automatizado en N8N para procesamiento de datos
-- Integración con Gmail, Google Sheets y Telegram
-- Clasificación automática de urgencia según criterios de negocio
+Bot de Telegram para gestionar reservaciones de servicios de streaming en vivo, con catálogo dinámico desde Google Sheets y recuperación de sesión inteligente.
 
 ---
 
-## ✨ Características Principales
+## 🚀 Características Principales
 
-### 🎯 Formulario Web
-- **Wizard de 4 pasos** con indicador de progreso
-- **Campos dinámicos** según tipo de evento
-- **Validación en tiempo real** con feedback visual
-- **Diseño responsive** con glassmorphism
-- **Fondos dinámicos** que cambian según el evento
+### ✅ Implementado y Funcionando
 
-### 🤖 Workflow N8N
-- **Cálculo automático** de días hasta el evento
-- **Clasificación de urgencia** (Alta 🔴, Media 🟡, Normal 🟢)
-- **Validación de datos** en backend
-- **Bifurcación inteligente** (datos válidos vs inválidos)
-- **Registro en Google Sheets** (solicitudes y errores)
-- **Notificaciones por Gmail y Telegram**
+- **Catálogo Dinámico**: Paquetes y addons cargados desde Google Sheets
+- **Recuperación de Sesión**: El usuario puede interrumpir y retomar en cualquier paso
+- **Validación Inteligente**: Validación de datos con Gemini AI
+- **Flujo de Corrección**: El usuario puede corregir cualquier dato antes de confirmar
+- **Cálculo Automático de Precios**: Suma de paquete base + addons seleccionados
+- **Multi-canal**: Soporta Telegram (Webhook en desarrollo)
 
----
+### 🏗️ Arquitectura
 
-## 🛠️ Stack Tecnológico
-
-- **Frontend:** HTML5, CSS3, JavaScript (Vanilla)
-- **Backend:** N8N (Workflow Automation)
-- **Integraciones:**
-  - Gmail API (Envío de correos)
-  - Google Sheets API (Almacenamiento)
-  - Telegram Bot API (Notificaciones)
-- **Infraestructura:** Docker, Cloudflare Tunnel
+```
+telegramTrigger
+  ↓
+obtenerPaquetes (Google Sheets)
+  ↓
+obtenerAddons (Google Sheets)
+  ↓
+buscarSesion (Google Sheets)
+  ↓
+detectarComando (detecta /start, /cancelar, etc.)
+  ↓
+switchAccion
+  ├─ cancelar_sesion → Update Sheets → enviarMensaje
+  ├─ mostrar_ayuda → enviarMensaje
+  └─ continuar_flujo → prepararContexto → logicaBot → Update Sheets → enviarMensaje
+```
 
 ---
 
 ## 📁 Estructura del Proyecto
 
 ```
-N8N/
-├── formulario.html              # Formulario web principal
-├── workflow_streaming.json      # Workflow de N8N (exportado)
-├── SCRIPTS_N8N.md              # Scripts JavaScript para nodos
-├── GUIA_SCRIPTS.md             # Guía de uso de scripts
-├── GUIA_GMAIL_OAUTH.md         # Configuración de Gmail
-├── GUIA_TELEGRAM.md            # Configuración de Telegram
-├── README.md                   # Este archivo
-├── ROADMAP.md                  # Planificación futura
-├── docs/
-│   ├── DISEÑO_WORKFLOW.md      # Diseño completo del workflow
-│   ├── PAYLOADS_PRUEBA.md      # Ejemplos para testing
-│   ├── RECURSOS_IMG.md         # URLs de imágenes
-│   └── TEMPLATE_EMAIL_ERROR.md # Template de email de error
-├── buenas-practicas/
-│   ├── buenas-practicas.md
-│   ├── buenas-practicas-n8n.md
-│   ├── buenas-practicas-javascript.md
-│   └── buenas-practicas-python.md
-├── img/                        # Imágenes del formulario
-├── start-n8n.sh               # Script para iniciar N8N
-├── stop-n8n.sh                # Script para detener N8N
-└── expose-n8n.sh              # Script para exponer con Cloudflare
+/home/programar/Documentos/N8N/
+├── refactored-nodes/           # Nodos de código refactorizados
+│   ├── detectarComando.js      # Detecta comandos globales
+│   ├── prepararContexto.js     # Consolida catálogo y contexto
+│   ├── logicaBot.js            # Máquina de estados principal
+│   ├── validadorIA.js          # Validación con Gemini
+│   └── ...
+├── workflow_streaming.json     # Workflow completo de N8N
+└── buenas-practicas/           # Documentación de buenas prácticas
+    ├── buenas-practicas.md
+    ├── buenas-practicas-n8n.md
+    ├── buenas-practicas-python.md
+    └── buenas-practicas-javascript.md
 ```
 
 ---
 
-## 🚀 Inicio Rápido
+## 🔧 Configuración Inicial
 
-### Prerrequisitos
-- Docker instalado
-- Cloudflared instalado (para desarrollo local)
-- Cuenta de Google (para Gmail y Sheets)
-- Bot de Telegram creado
+### 1. Google Sheets
 
-### 1. Iniciar N8N Local
+Crear libro `Catalogo_Servicios` con 2 hojas:
 
-```bash
-# Terminal 1: Iniciar N8N
-./start-n8n.sh
+**Hoja "Paquetes":**
+| Nombre | Descripcion | Detalle | Precio | Icono |
+|--------|-------------|---------|--------|-------|
+| Básico | 🥉 Básico - 1 cámara HD | ["1 cámara HD", "..."] | 150 | 🥉 |
 
-# Terminal 2: Exponer con Cloudflare Tunnel
-./expose-n8n.sh
-```
+**Hoja "Addons":**
+| Nombre | Icono | precio |
+|--------|-------|--------|
+| 📹 Cámaras + Micrófonos adicionales | 📹 | 30 |
 
-### 2. Configurar Credenciales
+**Hoja "Sesiones_Telegram":**
+- Estructura definida en `canonical_data_schema.js`
 
-Sigue las guías de configuración:
-- [Gmail OAuth](GUIA_GMAIL_OAUTH.md)
-- [Telegram Bot](GUIA_TELEGRAM.md)
+### 2. Credenciales Google
 
-### 3. Importar Workflow
+Ver guía completa en: `GUIA_CONFIGURACION_GOOGLE_SQLITE.md`
 
-1. Abre N8N en `http://localhost:5678`
-2. Importa `workflow_streaming.json`
-3. Configura las credenciales en cada nodo
+**Importante**: 
+- Agregar email como "Usuario de prueba" en Google Cloud Console
+- Renovar credenciales cada 7 días (modo desarrollo)
 
-### 4. Actualizar URL del Webhook
+### 3. N8N
 
-Copia la URL del Cloudflare Tunnel y actualízala en `formulario.html`:
-
-```javascript
-const webhookUrl = 'https://tu-url.trycloudflare.com/webhook-test/streaming-service';
-```
-
-### 5. Probar el Formulario
-
-Abre `formulario.html` en tu navegador y envía una solicitud de prueba.
+1. Importar `workflow_streaming.json`
+2. Configurar credenciales de Google Sheets
+3. Configurar token de Telegram Bot
+4. Activar workflow
 
 ---
 
-## 📊 Flujo del Workflow
+## 📊 Flujo de Conversación
 
 ```
-Webhook
-  ↓
-Calcular Días Restantes
-  ↓
-Clasificar Urgencia
-  ↓
-Validar Datos
-  ↓
-IF (¿Datos Válidos?)
-  ├─ TRUE → Gmail (Confirmación) + Sheets (Registro) + Telegram (Notificación)
-  └─ FALSE → Gmail (Error) + Sheets (Errores)
-```
-
----
-
-## 🧪 Testing
-
-Usa los payloads de prueba en `docs/PAYLOADS_PRUEBA.md` con Postman para probar el workflow:
-
-```bash
-# Ejemplo de payload
-POST https://tu-url.trycloudflare.com/webhook-test/streaming-service
-Content-Type: application/json
-
-{
-  "tipo_evento": "Eventos sociales",
-  "fecha_evento": "2025-12-01",
-  "nombre_cliente": "María González",
-  ...
-}
+1. Usuario: /start
+2. Bot: ¿Qué tipo de evento? [Botones]
+3. Usuario: Selecciona tipo
+4. Bot: ¿Fecha del evento? (DD/MM/YYYY)
+5. Usuario: Escribe fecha
+6. Bot: ¿En qué ciudad?
+7. Usuario: Escribe ciudad
+8. Bot: ¿Duración? [Botones]
+9. Usuario: Selecciona duración
+10. Bot: ¿Tiene internet? [Botones]
+11. Usuario: Selecciona Sí/No
+12. Bot: Selecciona paquete [Botones dinámicos]
+13. Usuario: Selecciona paquete
+14. Bot: ¿Addons? [Botones dinámicos]
+15. Usuario: Selecciona addons (múltiple)
+16. Bot: ¿Tu nombre?
+17. Usuario: Escribe nombre
+18. Bot: ¿Tu email?
+19. Usuario: Escribe email
+20. Bot: ¿Tu teléfono?
+21. Usuario: Escribe teléfono
+22. Bot: ¿Comentarios?
+23. Usuario: Escribe comentarios
+24. Bot: Resumen + [Confirmar/Corregir/Cancelar]
+25. Usuario: Confirma
+26. Bot: ✅ Reservación enviada
 ```
 
 ---
 
-## 📚 Documentación Adicional
+## 🎯 Nodos Principales
 
-- **[DISEÑO_WORKFLOW.md](docs/DISEÑO_WORKFLOW.md)** - Diseño detallado del workflow
-- **[SCRIPTS_N8N.md](SCRIPTS_N8N.md)** - Scripts JavaScript para nodos Code
-- **[PAYLOADS_PRUEBA.md](docs/PAYLOADS_PRUEBA.md)** - Ejemplos de datos para testing
-- **[GUIA_SCRIPTS.md](GUIA_SCRIPTS.md)** - Cómo ejecutar los scripts de Docker
-- **[ROADMAP.md](ROADMAP.md)** - Planificación de futuras versiones
+### `detectarComando.js`
+**Responsabilidad**: Detectar comandos globales
+- `/start`, `/reservar` → continuar_flujo
+- `/cancelar` → cancelar_sesion
+- `/ayuda` → mostrar_ayuda
+
+### `prepararContexto.js` (NUEVO - v2.0)
+**Responsabilidad**: Consolidar catálogo y preparar contexto
+- Carga paquetes y addons de Sheets
+- Detecta recuperación de sesión
+- Genera mensaje y botones de recuperación
+- Pasa contexto completo a logicaBot
+
+### `logicaBot.js`
+**Responsabilidad**: Máquina de estados de conversación
+- Maneja 13 pasos del flujo
+- Valida datos con `Validators`
+- Genera botones dinámicos
+- Calcula precios totales
+
+### `validadorIA.js`
+**Responsabilidad**: Validación con Gemini AI
+- Valida datos complejos (ubicación, fecha)
+- Máximo 4 intentos
+- Escalación a soporte si falla
 
 ---
 
-## 🔧 Mantenimiento
+## 📚 Documentación Importante
 
-### Reconectar Gmail (Cada 7 días)
-Como la app de Google está en modo "Testing", debes reconectar Gmail semanalmente:
-1. Abre las credenciales en N8N
-2. Haz clic en "Reconnect"
-3. Autoriza nuevamente
+### Planes de Implementación
+- `catalogo_dinamico_plan.md` - Diseño del catálogo dinámico
+- `preparar_contexto_plan.md` - Arquitectura de prepararContexto
+- `correction_flow_plan.md` - Flujo de corrección de datos
 
-### Actualizar URL de Cloudflare
-Cada vez que reinicies el tunnel, actualiza la URL en `formulario.html`.
+### Walkthroughs
+- `walkthrough.md` - Logros principales del proyecto
+- `refactoring_preparar_contexto.md` - Refactorización v2.0
 
-### Backup del Workflow
-Exporta regularmente el workflow desde N8N:
+### Correcciones y Fixes
+- `catalogo_fixes_23dic.md` - Fixes del catálogo dinámico
+- `resumen_final_refactoring.md` - Resumen de refactorización
+- `limpieza_codigo_logicaBot.md` - Limpieza de código
+
+### Auditorías
+- `auditoria_logicaBot.md` - Auditoría de código obsoleto
+
+---
+
+## 🔍 Debugging
+
+### Logs Importantes
+
+**En `prepararContexto`:**
 ```
-Settings → Export → workflow_streaming.json
+📊 Paquetes raw recibidos: 4
+📊 Addons raw recibidos: 4
+✅ Catálogo consolidado: 4 paquetes, 4 addons
 ```
 
----
+**En `logicaBot` (Recuperación):**
+```
+🔄 Recuperación de sesión detectada - Mostrando mensaje de recuperación
+🔄 Recuperación con callback activo - Procesando selección: pkg_premium
+```
 
-## 🎯 Tipos de Eventos Soportados
+### Problemas Comunes
 
-1. **Eventos Sociales** (Bodas, cumpleaños, reuniones)
-2. **Conferencias y Eventos Corporativos**
-3. **E-Sport y Gaming**
-4. **Conciertos y Eventos Artísticos**
-5. **Eventos Religiosos**
-6. **Eventos Deportivos**
+**Catálogo vacío:**
+- Verificar que nodos `obtenerPaquetes` y `obtenerAddons` estén antes del switch
+- Usar `.all()` no `.getAll()`
 
----
+**Loop infinito en recuperación:**
+- Verificar que `logicaBot` solo retorne mensaje de recuperación si `!incomingCallback`
 
-## 📦 Paquetes Disponibles
-
-- **Básico** - 1 cámara HD, streaming a 1 plataforma
-- **Estándar** - 2 cámaras HD, streaming a 2 plataformas
-- **Premium** - 3 cámaras HD, overlays avanzados
-- **Enterprise** - Solución personalizada
-
----
-
-## 🤝 Contribuciones
-
-Este es un proyecto educativo. Si deseas contribuir:
-1. Fork el repositorio
-2. Crea una rama para tu feature
-3. Haz commit de tus cambios
-4. Abre un Pull Request
+**Botones no aparecen:**
+- Verificar que `prepararContexto` esté generando `botonesRecuperacion`
+- Verificar logs del catálogo
 
 ---
 
-## 📝 Licencia
+## 🚧 Próximos Pasos
 
-MIT License - Ver archivo LICENSE para más detalles
+### Prioridad ALTA
+- [ ] Probar flujo completo end-to-end
+- [ ] Verificar cálculo de precios en todos los escenarios
+- [ ] Probar recuperación en todos los pasos
 
----
+### Prioridad MEDIA
+- [ ] Implementar SQLite para sesiones (reemplazar Google Sheets)
+- [ ] Agregar comando `/estado` para ver reservación actual
+- [ ] Mejorar mensajes de error
 
-## 👤 Autor
-
-Desarrollado como proyecto de aprendizaje en automatización de workflows y desarrollo web.
-
----
-
-## 🔗 Enlaces Útiles
-
-- [Documentación de N8N](https://docs.n8n.io/)
-- [Gmail API](https://developers.google.com/gmail/api)
-- [Google Sheets API](https://developers.google.com/sheets/api)
-- [Telegram Bot API](https://core.telegram.org/bots/api)
-- [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/)
+### Prioridad BAJA
+- [ ] Integración con CRM
+- [ ] Recordatorios automáticos
+- [ ] Soporte multi-idioma
 
 ---
 
-**Última Actualización:** 2025-12-03
+## 🤝 Contribución
+
+### Antes de Modificar Código
+
+1. Leer `buenas-practicas-n8n.md`
+2. Leer `buenas-practicas-javascript.md`
+3. Revisar `GEMINI.md` para entender el estilo de código
+
+### Al Agregar Nuevas Funcionalidades
+
+1. Crear plan de implementación en `.gemini/antigravity/brain/`
+2. Actualizar `task.md`
+3. Implementar
+4. Crear walkthrough
+5. Actualizar este README
+
+---
+
+## 📞 Contacto y Soporte
+
+- **Proyecto**: Live Moments - Streaming Services
+- **Bot**: @Streaming_n8n_bot
+- **Última Actualización**: 23 Diciembre 2024
+- **Versión**: 2.0 - Arquitectura Refactorizada
+
+---
+
+## 📝 Notas de Versión
+
+### v2.0 (23 Dic 2024)
+- ✅ Catálogo dinámico desde Google Sheets
+- ✅ Nuevo nodo `prepararContexto` para centralizar lógica
+- ✅ Recuperación de sesión mejorada
+- ✅ Limpieza de código obsoleto (-14 líneas)
+- ✅ Cálculo automático de precios
+
+### v1.0 (Dic 2024)
+- ✅ Flujo básico de conversación
+- ✅ Validación con Gemini AI
+- ✅ Flujo de corrección de datos
+- ✅ Confirmación antes de cancelar
