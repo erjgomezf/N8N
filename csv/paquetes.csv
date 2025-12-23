@@ -1,0 +1,5 @@
+Nombre,Descripcion,Detalle,Precio,Icono
+Básico,🥉 Básico - 1 cámara HD,"[ ""1 cámara HD"", ""1 micrófono inalámbrico"", ""Streaming a 1 plataforma"", ""Sin overlays"", ""Operador técnico básico"" ]",150,🥉
+Estándar,🥈 Estándar - 2 cámaras HD + overlays básicos,"[ ""2 cámaras HD"", ""2 micrófonos inalámbricos"", ""Streaming a 1 plataforma"", ""Overlays básicos (templates predefinidos)"", ""Operador técnico básico"" ]",250,🥈
+Premium,🥇 Premium - 3 cámaras HD + director técnico,"[ ""3 cámaras HD"", ""3 micrófonos profesionales + mezclador"", ""Streaming a 1 plataforma"", ""Overlays avanzados (animaciones, lower thirds)"", ""Director técnico profesional"" ]",400,🥇
+Enterprise,💎 Enterprise - 4 cámaras 4K + multi-plataforma,"[ ""4 cámaras 4K"", ""4 micrófonos profesionales + mezclador"", ""Streaming simultáneo a hasta 3 plataformas"", ""Overlays avanzados + branding personalizado"", ""Director técnico + asistente"" ]",600,💎

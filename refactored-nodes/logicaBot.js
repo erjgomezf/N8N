@@ -70,6 +70,7 @@ const OPTIONS = {
     [{ text: '⛪ Religiosos', callback_data: 'Eventos Religiosos' }],
     [{ text: '⚽ Deportivos', callback_data: 'Eventos Deportivos' }]
   ],
+  // FALLBACK ESTÁTICO - Solo se usa si el catálogo dinámico falla al cargar
   PAQUETE: [
     [{ text: '🥉 Básico - 1 cámara HD', callback_data: 'Básico' }],
     [{ text: '🥈 Estándar - 2 cámaras HD + overlays básicos', callback_data: 'Estándar' }],
@@ -168,45 +169,54 @@ const Validators = {
 // MAPEO DE INPUTS (N8N)
 // ============================================
 
-// 1. Obtener el update de Telegram (siempre del nodo Trigger)
-let telegramUpdate = {};
-try {
-    telegramUpdate = $('telegramTrigger').first().json;
-} catch (e) {
-    console.log('⚠️ No se pudo leer telegramTrigger, usando input directo');
-    telegramUpdate = $input.item.json;
-}
+// ============================================
+// LEER CONTEXTO PREPARADO
+// ============================================
 
-// 2. Obtener la sesión (del nodo buscarSesion)
-let sessionData = {};
-try {
-    // Intentamos leer del nodo buscarSesion si existe
-    sessionData = $('buscarSesion').first().json;
-} catch (e) {
-    console.log('⚠️ No se pudo leer buscarSesion, asumiendo sesión nueva');
-    sessionData = {};
-}
+// Leer contexto consolidado de prepararContexto
+const contexto = $('prepararContexto').first().json;
 
-// 3. Combinar todo en un objeto de trabajo
-const update = {
-    ...telegramUpdate,
-    ...sessionData
+const catalog = contexto.catalog || { paquetes: [], addons: [] };
+const telegramUpdate = {
+  message: contexto.message,
+  callback_query: contexto.callback_query
 };
 
-// 4. Extraer datos específicos
+// Datos de sesión
 const session = {
-    paso_actual: sessionData.paso_actual || null,
-    datos_json: sessionData.datos_json || null,
-    intentos_fallidos: sessionData.intentos_fallidos || 0
+  paso_actual: contexto.paso_actual,
+  datos_json: JSON.stringify(contexto.datos_json),
+  intentos_fallidos: contexto.intentos_fallidos
 };
 
+// Extraer datos del mensaje
 const incomingText = telegramUpdate.message?.text || '';
 const incomingCallback = telegramUpdate.callback_query?.data || null;
+
+// Si es recuperación de sesión Y NO hay callback activo, usar el mensaje preparado
+// Si hay callback, significa que el usuario ya hizo clic en un botón, así que procesamos normalmente
+if (contexto.esRecuperacion && !incomingCallback && !incomingText) {
+  console.log('🔄 Recuperación de sesión detectada - Mostrando mensaje de recuperación');
+  return {
+    text: contexto.mensajeRecuperacion,
+    buttons: contexto.botonesRecuperacion,
+    next_step: contexto.paso_actual,
+    update_data: contexto.datos_json,
+    action: 'reply',
+    new_intentos: 0,
+    tipoValidacion: contexto.tipoValidacion
+  };
+}
+
+// Si llegamos aquí, procesamos normalmente (ya sea nueva conversación o callback durante recuperación)
+if (contexto.esRecuperacion && incomingCallback) {
+  console.log('🔄 Recuperación con callback activo - Procesando selección:', incomingCallback);
+}
 
 // Debugging
 console.log('--- DEBUG INFO ---');
 console.log('Telegram Update:', telegramUpdate);
-console.log('Session Data:', sessionData);
+console.log('Contexto:', contexto);
 console.log('Incoming Callback:', incomingCallback);
 console.log('Current Step:', session.paso_actual);
 console.log('------------------');
@@ -215,12 +225,6 @@ let currentStep = session.paso_actual || STEPS.START;
 const currentData = session.datos_json ? JSON.parse(session.datos_json) : {};
 const intentos = parseInt(session.intentos_fallidos || 0);
 
-// FALLBACK: Si estamos en START pero recibimos un callback, asumimos que es respuesta al menú
-// Esto corrige el problema si la sesión no se guardó/recuperó correctamente
-if (currentStep === STEPS.START && incomingCallback) {
-    console.log('⚠️ Detectado callback en paso START. Forzando paso FECHA (Recovery Mode).');
-    currentStep = STEPS.FECHA;
-}
 
 let response = {
   text: '',
@@ -232,61 +236,71 @@ let response = {
   tipoValidacion: 'BOT' // Por defecto, el bot controla la validación
 };
 
-// Función helper para generar mensaje de resumen según el paso actual
-function generarMensajeResumen(paso, datos) {
-  const resumenDatos = [];
-  if (datos.tipo_evento) resumenDatos.push(`🎊 Evento: ${datos.tipo_evento}`);
-  if (datos.fecha_evento) resumenDatos.push(`📅 Fecha: ${datos.fecha_evento}`);
-  if (datos.ubicacion_evento) resumenDatos.push(`📍 Ciudad: ${datos.ubicacion_evento}`);
-  if (datos.paquete_interes) resumenDatos.push(`📦 Paquete: ${datos.paquete_interes}`);
-  if (datos.nombre_cliente) resumenDatos.push(`👤 Nombre: ${datos.nombre_cliente}`);
-  if (datos.email_cliente) resumenDatos.push(`📧 Email: ${datos.email_cliente}`);
-  
-  const datosStr = resumenDatos.length > 0 ? `**Datos guardados:**\n${resumenDatos.join('\n')}\n\n` : '';
-  
-  const mensajesPorPaso = {
-    [STEPS.FECHA]: '¿Qué tipo de evento deseas transmitir?',
-    [STEPS.CIUDAD]: '📅 ¿Cuál es la fecha del evento? (DD/MM/YYYY)',
-    [STEPS.PAQUETE]: '📍 ¿En qué ciudad será el evento?',
-    [STEPS.NOMBRE]: '📦 Selecciona un paquete:',
-    [STEPS.EMAIL]: '👤 ¿Cuál es tu nombre completo?',
-    [STEPS.TELEFONO]: '📧 ¿Cuál es tu correo electrónico?',
-    [STEPS.CONFIRMACION]: '📞 ¿Cuál es tu número de teléfono?',
-    [STEPS.COMPLETADO]: '¿Confirmas los datos?'
-  };
-  
-  return datosStr + (mensajesPorPaso[paso] || 'Continuemos donde quedamos...');
+
+// --- FUNCIONES HELPER PARA CATÁLOGO DINÁMICO ---
+
+/**
+ * Genera el teclado inline de addons filtrando los ya seleccionados
+ */
+function generarBotonesAddons(catalogo, yaSeleccionados) {
+  const botones = catalogo.addons
+    .filter(a => !yaSeleccionados.includes(a.Nombre))
+    .map(a => ([{
+      text: `${a.Icono} ${a.Nombre} (+$${a.Precio})`,
+      callback_data: `addon_${a.Nombre.toLowerCase().replace(/\s+/g, '_')}`
+    }]));
+    
+  botones.push([{ text: '✅ Listo, continuar', callback_data: 'addon_listo' }]);
+  return botones;
 }
 
-// Función helper para obtener botones según el paso
-function obtenerBotonesParaPaso(paso) {
-  const botonesPorPaso = {
-    [STEPS.FECHA]: OPTIONS.TIPO_EVENTO,
-    [STEPS.NOMBRE]: OPTIONS.PAQUETE,
-    [STEPS.COMPLETADO]: OPTIONS.CONFIRMACION
-  };
-  return botonesPorPaso[paso] || null;
-}
-
-// Función helper para generar el resumen completo de confirmación
+/**
+ * Genera el resumen final con desglose de precios y total
+ */
 function generarResumenConfirmacion(datos) {
   const advertencia = datos.revision_manual ? '\n⚠️ **Nota:** Algunos datos requieren revisión manual.\n' : '';
   
-  return `
-📋 **RESUMEN DE SOLICITUD**
-${advertencia}
-👤 **Cliente:** ${datos.nombre_cliente || 'No especificado'}
-📧 **Email:** ${datos.email_cliente || 'No especificado'}
-📞 **Tel:** ${datos.telefono_cliente || 'No especificado'}
+  // Cálculo de total
+  let subtotalAddons = 0;
+  let listaAddonsTexto = 'Ninguno';
+  
+  if (Array.isArray(datos.add_ons_solicitados) && datos.add_ons_solicitados.length > 0) {
+    subtotalAddons = datos.add_ons_solicitados.reduce((acc, curr) => acc + (curr.precio || 0), 0);
+    listaAddonsTexto = datos.add_ons_solicitados.map(a => `• ${a.nombre} ($${a.precio})`).join('\n');
+  }
 
-🎊 **Evento:** ${datos.tipo_evento || 'No especificado'}
-📅 **Fecha:** ${datos.fecha_evento || 'No especificado'}
-📍 **Lugar:** ${datos.ubicacion_evento || 'No especificado'}
-📦 **Paquete:** ${datos.paquete_interes || 'No especificado'}
+  const total = (datos.precio_base || 0) + subtotalAddons;
+  
+  // Formatear detalles del paquete si existen
+  let detallesPkg = '';
+  if (Array.isArray(datos._detalles_pkg) && datos._detalles_pkg.length > 0) {
+    detallesPkg = `\n✨ **Incluye:**\n${datos._detalles_pkg.map(d => `  - ${d}`).join('\n')}`;
+  }
+
+  return `
+📋 **RESUMEN DE TU RESERVACIÓN**
+${advertencia}
+👤 **Cliente:** ${datos.nombre_cliente}
+📧 **Email:** ${datos.email_cliente}
+📞 **Tel:** ${datos.telefono_cliente}
+
+🎉 **Evento:** ${datos.tipo_evento}
+📅 **Fecha:** ${datos.fecha_evento}
+📍 **Lugar:** ${datos.ubicacion_evento}
+⏱️ **Duración:** ${datos.duracion_estimada}
+
+📦 **Paquete:** ${datos.paquete_interes} ($${datos.precio_base})${detallesPkg}
+
+✨ **Servicios Adicionales:**
+${listaAddonsTexto}
+
+---
+💰 **Presupuesto Estimado Total: $${total}**
 
 ¿Todo correcto?
   `.trim();
 }
+
 
 // Función helper para manejar validación con fallback
 // fieldName: nombre del campo donde guardar el dato (ej: 'fecha_evento', 'nombre_cliente')
@@ -318,43 +332,6 @@ function handleValidation(validatorResult, rawText, successNextStep, successMess
       return false;
     }
   }
-}
-
-// Manejo de Comandos Globales
-if (incomingText === '/cancelar') {
-  return {
-    text: '🚫 Reservación cancelada. Escribe /reservar para comenzar de nuevo.',
-    action: 'cancel_session'
-  };
-}
-
-if (incomingText === '/start' || incomingText === '/reservar') {
-  // Verificar si ya existe una sesión activa con datos
-  const tieneSessionActiva = currentStep !== STEPS.START && Object.keys(currentData).length > 0;
-  
-  if (tieneSessionActiva) {
-    // Ya tiene sesión: NO reiniciar, continuar donde quedó
-    // Incrementar intentos fallidos (el usuario escribió /start en lugar del dato esperado)
-    const mensajeResumen = generarMensajeResumen(currentStep, currentData);
-    
-    return {
-      text: `👋 ¡Hola de nuevo! Veo que ya tenías una reservación en progreso.\n\n${mensajeResumen}`,
-      buttons: obtenerBotonesParaPaso(currentStep),
-      next_step: currentStep,  // Mantener el paso actual
-      update_data: currentData,  // Preservar datos existentes
-      action: 'reply',
-      new_intentos: intentos + 1  // Incrementar intentos
-    };
-  }
-  
-  // No tiene sesión activa: comenzar nuevo flujo
-  return {
-    text: '👋 ¡Hola! Soy el asistente de Live Moments.\n\n¿Qué tipo de evento deseas transmitir?',
-    buttons: OPTIONS.TIPO_EVENTO,
-    next_step: STEPS.FECHA,
-    action: 'reply',
-    new_intentos: 0
-  };
 }
 
 // Máquina de Estados
@@ -442,14 +419,54 @@ switch (currentStep) {
       response.update_data.tiene_internet_venue = tieneInternet ? 'Sí' : 'No';
       
       response.text = `✅ Internet: ${tieneInternet ? 'Sí' : 'No'}\n\n📦 Ahora selecciona el paquete de tu interés:`;
-      response.buttons = OPTIONS.PAQUETE;
+      
+      // GENERACIÓN DINÁMICA DE BOTONES DE PAQUETES
+      if (catalog.paquetes && catalog.paquetes.length > 0) {
+        response.buttons = catalog.paquetes.map(p => ([{ 
+          text: `${p.Icono} ${p.Nombre}`, 
+          callback_data: `pkg_${p.Nombre.toLowerCase().replace(/\s+/g, '_')}` 
+        }]));
+      } else {
+        // Fallback si el catálogo falla
+        response.buttons = OPTIONS.PAQUETE;
+      }
+      
       response.next_step = STEPS.PAQUETE;
     } else {
-      response.text = '⚠️ Por favor selecciona una opción usando los botones.';
+      response.text = '⚠️ Por favor selecciona una opción.';
       response.buttons = [
         [{ text: '✅ Sí, tiene internet', callback_data: 'internet_si' }],
         [{ text: '❌ No tiene / No estoy seguro', callback_data: 'internet_no' }]
       ];
+    }
+    break;
+
+  case STEPS.PAQUETE:
+    // Input anterior: Callback de botón de paquete
+    if (incomingCallback && incomingCallback.startsWith('pkg_')) {
+      const nombrePkgNorm = incomingCallback.replace('pkg_', '');
+      const pkg = catalog.paquetes.find(p => p.Nombre.toLowerCase().replace(/\s+/g, '_') === nombrePkgNorm);
+
+      if (pkg) {
+        response.update_data.paquete_interes = pkg.Nombre;
+        response.update_data.precio_base = pkg.Precio;
+        response.update_data._detalles_pkg = pkg.Detalle; // Guardar detalles para el resumen
+        
+        response.text = `✅ Paquete: ${pkg.Nombre}\n\n✨ ¿Deseas agregar algún servicio adicional?`;
+        
+        // GENERACIÓN DINÁMICA DE BOTONES DE ADDONS
+        response.buttons = generarBotonesAddons(catalog, []);
+        response.next_step = STEPS.ADDONS;
+        
+        // Inicializar array de addons
+        response.update_data.add_ons_solicitados = [];
+      } else {
+        response.text = '⚠️ Error: Paquete no encontrado en el catálogo. Por favor selecciona otro.';
+        response.buttons = catalog.paquetes.map(p => ([{ text: `${p.Icono} ${p.Nombre}`, callback_data: `pkg_${p.Nombre.toLowerCase().replace(/\s+/g, '_')}` }]));
+      }
+    } else {
+      response.text = '⚠️ Por favor selecciona un paquete usando los botones.';
+      response.buttons = catalog.paquetes.map(p => ([{ text: `${p.Icono} ${p.Nombre}`, callback_data: `pkg_${p.Nombre.toLowerCase().replace(/\s+/g, '_')}` }]));
     }
     break;
 
@@ -459,42 +476,35 @@ switch (currentStep) {
     
     if (incomingCallback === 'addon_listo') {
       // Terminar selección de addons
-      const addonsTexto = addonsActuales.length > 0 ? addonsActuales.join(', ') : 'Ninguno';
+      const nombresAddons = addonsActuales.map(a => a.nombre);
+      const addonsTexto = nombresAddons.length > 0 ? nombresAddons.join(', ') : 'Ninguno';
       response.text = `✅ Servicios adicionales: ${addonsTexto}\n\n👤 ¿Cuál es tu nombre completo?`;
       response.next_step = STEPS.NOMBRE;
     } else if (incomingCallback && incomingCallback.startsWith('addon_')) {
-      // Mapa de etiquetas para guardar nombres bonitos
-      const mapaAddons = {
-        'addon_drone': 'Drone',
-        'addon_camara': 'Cámara Adicional',
-        'addon_highlights': 'Edición Highlights'
-      };
+      const nombreAddonNorm = incomingCallback.replace('addon_', '');
+      const addonMeta = catalog.addons.find(a => a.Nombre.toLowerCase().replace(/\s+/g, '_') === nombreAddonNorm);
       
-      const addonSeleccionado = mapaAddons[incomingCallback];
-      if (addonSeleccionado && !addonsActuales.includes(addonSeleccionado)) {
-        addonsActuales.push(addonSeleccionado);
-        response.update_data.add_ons_solicitados = addonsActuales;
-        response.text = `✅ Agregado: ${addonSeleccionado}\n\n¿Deseas agregar otro?`;
-      } else if (addonsActuales.includes(addonSeleccionado)) {
-        response.text = `El servicio ya estaba seleccionado.\n\n¿Deseas agregar otro?`;
+      if (addonMeta) {
+        // Verificar si ya está seleccionado
+        const yaExiste = addonsActuales.some(a => a.nombre === addonMeta.Nombre);
+        
+        if (!yaExiste) {
+          addonsActuales.push({ nombre: addonMeta.Nombre, precio: addonMeta.Precio });
+          response.update_data.add_ons_solicitados = addonsActuales;
+          response.text = `✅ Agregado: ${addonMeta.Nombre} (+$${addonMeta.Precio})\n\n¿Deseas agregar otro?`;
+        } else {
+          response.text = `El servicio "${addonMeta.Nombre}" ya estaba seleccionado.\n\n¿Deseas agregar otro?`;
+        }
+      } else {
+        response.text = `⚠️ No se encontró el servicio adicional seleccionado. ¿Deseas agregar otro?`;
       }
       
-      // Repetir botones (mantenerse en el mismo paso)
-      response.buttons = [
-        [{ text: '🚁 Drone (Cobertura Aérea)', callback_data: 'addon_drone' }],
-        [{ text: '📹 Cámara Adicional', callback_data: 'addon_camara' }],
-        [{ text: '🎬 Edición de Highlights', callback_data: 'addon_highlights' }],
-        [{ text: '✅ Listo, continuar', callback_data: 'addon_listo' }]
-      ];
+      // Repetir botones dinámicos
+      response.buttons = generarBotonesAddons(catalog, addonsActuales.map(a => a.nombre));
       response.next_step = STEPS.ADDONS;
     } else {
       response.text = '⚠️ Por favor selecciona una opción usando los botones.';
-      response.buttons = [
-        [{ text: '🚁 Drone (Cobertura Aérea)', callback_data: 'addon_drone' }],
-        [{ text: '📹 Cámara Adicional', callback_data: 'addon_camara' }],
-        [{ text: '🎬 Edición de Highlights', callback_data: 'addon_highlights' }],
-        [{ text: '✅ Listo, continuar', callback_data: 'addon_listo' }]
-      ];
+      response.buttons = generarBotonesAddons(catalog, addonsActuales.map(a => a.nombre));
       response.next_step = STEPS.ADDONS;
     }
     break;
@@ -503,59 +513,12 @@ switch (currentStep) {
     // Input anterior: Texto libre de comentarios (después de TELEFONO)
     response.update_data.comentarios_adicionales = incomingText || 'Ninguno';
     
-    // Mostrar resumen de confirmación
-    const d = response.update_data;
-    const advertencia = d.revision_manual ? '\n⚠️ **Nota:** Algunos datos requieren revisión manual.\n' : '';
-    const addonsResumen = Array.isArray(d.add_ons_solicitados) && d.add_ons_solicitados.length > 0 
-      ? d.add_ons_solicitados.join(', ') 
-      : 'Ninguno';
-    
-    const resumenFinal = `
-📋 **RESUMEN DE SOLICITUD**
-${advertencia}
-👤 **Cliente:** ${d.nombre_cliente}
-📧 **Email:** ${d.email_cliente}
-📞 **Tel:** ${d.telefono_cliente}
-
-🎉 **Evento:** ${d.tipo_evento}
-📅 **Fecha:** ${d.fecha_evento}
-📍 **Lugar:** ${d.ubicacion_evento}
-⏱️ **Duración:** ${d.duracion_estimada || 'No especificada'}
-📡 **Internet:** ${d.tiene_internet_venue || 'No especificado'}
-📦 **Paquete:** ${d.paquete_interes}
-✨ **Addons:** ${addonsResumen}
-📝 **Comentarios:** ${d.comentarios_adicionales || 'Ninguno'}
-
-¿Todo correcto?
-    `.trim();
-    
-    response.text = resumenFinal;
+    // Mostrar resumen de confirmación dinámico
+    response.text = generarResumenConfirmacion(response.update_data);
     response.buttons = OPTIONS.CONFIRMACION;
     response.next_step = STEPS.COMPLETADO;
     break;
 
-  case STEPS.PAQUETE:
-    // Input anterior: INTERNET (Callback de botón de paquete)
-    if (incomingCallback) {
-      response.update_data.paquete_interes = incomingCallback;
-      response.text = `✅ Paquete: ${incomingCallback}\n\n✨ ¿Deseas agregar algún servicio adicional?`;
-      response.buttons = [
-        [{ text: '🚁 Drone (Cobertura Aérea)', callback_data: 'addon_drone' }],
-        [{ text: '📹 Cámara Adicional', callback_data: 'addon_camara' }],
-        [{ text: '🎬 Edición de Highlights', callback_data: 'addon_highlights' }],
-        [{ text: '✅ Listo, continuar', callback_data: 'addon_listo' }]
-      ];
-      response.next_step = STEPS.ADDONS;
-      
-      // Inicializar array de addons
-      if (!response.update_data.add_ons_solicitados) {
-        response.update_data.add_ons_solicitados = [];
-      }
-    } else {
-      response.text = '⚠️ Por favor selecciona un paquete usando los botones.';
-      response.buttons = OPTIONS.PAQUETE;
-    }
-    break;
 
   case STEPS.NOMBRE:
     // PASO NOMBRE: Recibimos el nombre, pedimos email
@@ -656,7 +619,11 @@ ${advertencia}
       if (campoEditar === 'tipo_evento') {
         response.buttons = OPTIONS.TIPO_EVENTO;
       } else if (campoEditar === 'paquete_interes') {
-        response.buttons = OPTIONS.PAQUETE;
+        // MOSTRAR BOTONES DINÁMICOS EN CORRECCIÓN
+        response.buttons = catalog.paquetes.map(p => ([{ 
+          text: `${p.Icono} ${p.Nombre}`, 
+          callback_data: `pkg_${p.Nombre.toLowerCase().replace(/\s+/g, '_')}` 
+        }]));
       }
     } else {
       response.text = '⚠️ Por favor selecciona una opción del menú.';
@@ -720,6 +687,21 @@ ${advertencia}
           break;
         }
         valorValidado = resultado.value;
+      } else if (campoEditando === 'paquete_interes') {
+        // VALIDAR PAQUETE EN CORRECCIÓN
+        const nombrePkgNorm = nuevoValor.replace('pkg_', '');
+        const pkg = catalog.paquetes.find(p => p.Nombre.toLowerCase().replace(/\s+/g, '_') === nombrePkgNorm);
+        
+        if (pkg) {
+          valorValidado = pkg.Nombre;
+          response.update_data.precio_base = pkg.Precio;
+          response.update_data._detalles_pkg = pkg.Detalle;
+        } else {
+          response.text = '⚠️ Paquete no válido. Selecciona uno del menú:';
+          response.buttons = catalog.paquetes.map(p => ([{ text: `${p.Icono} ${p.Nombre}`, callback_data: `pkg_${p.Nombre.toLowerCase().replace(/\s+/g, '_')}` }]));
+          response.next_step = STEPS.CORRIGIENDO_CAMPO;
+          break;
+        }
       }
       
       // Guardar el nuevo valor
