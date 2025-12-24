@@ -253,3 +253,6 @@ telegram_bot_workflow.json
 workflow_streaming.json
 
 # End of https://www.toptal.com/developers/gitignore/api/linux,windows,macos,python
+expose-n8n.sh
+start-n8n.sh
+stop-n8n.sh
