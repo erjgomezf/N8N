@@ -4,6 +4,19 @@
 
 Bot de Telegram para gestionar reservaciones de servicios de streaming en vivo, con catálogo dinámico desde Google Sheets, lógica de recuperación y código optimizado.
 
+### ✅ LO QUE FUNCIONA (v2.1)
+- **Conversación**: Flujo de 13 pasos con validación inteligente (Gemini AI).
+- **Catálogo**: Carga dinámica de paquetes y addons desde Google Sheets.
+- **Sesión**: Recuperación automática de sesiones interrumpidas.
+- **Precios**: Cálculo automático con desglose detallado en el resumen.
+- **Correcion**: Los usuarios pueden editar sus datos antes de confirmar.
+
+### 🚧 PENDIENTES Y MEJORAS
+- [ ] Implementar SQLite para sesiones (reemplazar Google Sheets).
+- [ ] Comando `/estado` para ver reservación actual.
+- [ ] Manejo robusto de errores de Sheets y Timeouts de sesión.
+- [ ] Logging estructurado y métricas (Dashboard).
+
 ---
 
 ## 🚀 Características Principales
