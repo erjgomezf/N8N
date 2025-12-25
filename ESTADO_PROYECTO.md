@@ -1,6 +1,6 @@
 # 📊 Estado del Proyecto - Live Moments Bot
 
-## Última Actualización: 23 Diciembre 2024, 15:30
+## Última Actualización: 24 Diciembre 2024, 18:00
 
 ---
 
@@ -90,8 +90,10 @@
 ### Resueltos ✅
 - ✅ Catálogo vacío → Solucionado con `.all()` en prepararContexto
 - ✅ Loop infinito en recuperación → Solucionado verificando callback
-- ✅ Código duplicado → Eliminado 14 líneas obsoletas
+- ✅ Código duplicado → Optimización mayor en `logicaBot.js` (v2.1)
 - ✅ Campo `precio` minúscula → Soportado ambos casos
+- ✅ Error comandos tras cancelar → Solucionado unificando acciones (v2.1)
+- ✅ Visualización paquetes → Botones muestran descripción (v2.1)
 
 ### Pendientes ⚠️
 - ⚠️ Credenciales Google expiran cada 7 días (modo desarrollo)
@@ -247,6 +249,6 @@ N8N:
 
 ---
 
-**Estado General**: ✅ FUNCIONAL - Listo para pruebas y nuevas funcionalidades  
-**Última Prueba Exitosa**: 23 Dic 2024, 12:40  
+**Estado General**: ✅ FUNCIONAL (v2.1) - Código Optimizado y Estable
+**Última Prueba Exitosa**: 24 Dic 2024
 **Próxima Acción Recomendada**: Pruebas end-to-end completas

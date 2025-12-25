@@ -1,8 +1,8 @@
 # 🎥 Live Moments - Bot de Reservaciones Telegram
 
-## Estado del Proyecto: ✅ FUNCIONAL (v2.0 - Diciembre 2024)
+## Estado del Proyecto: ✅ FUNCIONAL (v2.1 - Diciembre 2024)
 
-Bot de Telegram para gestionar reservaciones de servicios de streaming en vivo, con catálogo dinámico desde Google Sheets y recuperación de sesión inteligente.
+Bot de Telegram para gestionar reservaciones de servicios de streaming en vivo, con catálogo dinámico desde Google Sheets, lógica de recuperación y código optimizado.
 
 ---
 
@@ -257,6 +257,12 @@ Ver guía completa en: `GUIA_CONFIGURACION_GOOGLE_SQLITE.md`
 ---
 
 ## 📝 Notas de Versión
+
+### v2.1 (24 Dic 2024)
+- ✅ Optimización masiva de `logicaBot.js` (eliminación de redundancias)
+- ✅ Consistencia en comandos `/start` y `/reservar`
+- ✅ Mejora visual: Botones de paquetes ahora muestran descripción
+- ✅ Corrección de errores de ruteo post-cancelación
 
 ### v2.0 (23 Dic 2024)
 - ✅ Catálogo dinámico desde Google Sheets
