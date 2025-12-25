@@ -45,9 +45,9 @@ let resultado = {
 
 // Solo procesamos comandos específicos
 if (esComando) {
-  
+
   if (comando === '/start' || comando === '/reservar') {
-    
+
     if (tipoValidacion === 'IA' && pasoActual === 'completado') {
       // CASO A: Reservación COMPLETADA (validada por IA)
       // El usuario ya tiene una reservación, notificar
@@ -58,21 +58,21 @@ if (esComando) {
         [{ text: '🗑️ Cancelar reservación', callback_data: 'confirmar_cancelar' }]
       ];
       resultado.datos_reservacion = datosJson;
-      
+
     } else if (tipoValidacion === 'BOT' && pasoActual !== 'start' && Object.keys(datosJson).length > 0) {
       // CASO B: Reservación EN PROGRESO (manejada por BOT)
       // Retomar donde quedó - esto lo maneja logicaBot, solo pasar
-      resultado.accion = 'retomar_sesion';
+      resultado.accion = 'continuar_flujo';
       // logicaBot ya tiene lógica para esto, solo marcamos la intención
-      
+
     } else {
       // CASO C: No hay reservación o está en start
       // Continuar flujo normal (crear nueva)
       resultado.accion = 'continuar_flujo';
     }
-    
+
   } else if (comando === '/cancelar') {
-    
+
     if (tipoValidacion === 'IA' || pasoActual !== 'start') {
       // Hay algo que cancelar
       resultado.accion = 'confirmar_cancelacion';
@@ -86,7 +86,7 @@ if (esComando) {
       resultado.accion = 'continuar_flujo';
       resultado.mensaje = 'ℹ️ No tienes ninguna reservación activa para cancelar.';
     }
-    
+
   } else if (comando === '/ayuda') {
     resultado.accion = 'mostrar_ayuda';
     resultado.mensaje = `🆘 **Ayuda - Live Moments Bot**\n\nComandos disponibles:\n• /start - Iniciar o ver reservación\n• /reservar - Nueva reservación\n• /cancelar - Cancelar reservación\n• /ayuda - Este mensaje`;
@@ -108,11 +108,11 @@ if (callback === 'confirmar_cancelar') {
 } else if (callback === 'ejecutar_cancelar') {
   resultado.accion = 'cancelar_sesion';
   resultado.mensaje = '🗑️ Tu reservación ha sido cancelada.\n\nEscribe /reservar para comenzar una nueva.';
-  
+
 } else if (callback === 'mantener_reservacion') {
   resultado.accion = 'continuar_flujo';
   resultado.mensaje = '✅ Perfecto, tu reservación sigue activa.';
-  
+
 } else if (callback === 'ver_detalles') {
   resultado.accion = 'mostrar_detalles';
   const d = datosJson;
@@ -125,5 +125,3 @@ resultado.tipoValidacion = tipoValidacion;
 resultado.paso_actual = pasoActual;
 
 return resultado;
-
-

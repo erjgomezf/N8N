@@ -32,7 +32,7 @@ try {
   // Leer paquetes
   const paquetesRaw = $('obtenerPaquetes').all();
   console.log('📊 Paquetes raw recibidos:', paquetesRaw.length);
-  
+
   catalog.paquetes = paquetesRaw.map(p => {
     let detalle = [];
     try {
@@ -42,7 +42,7 @@ try {
       console.error(`Error parseando Detalle para ${p.json.Nombre}:`, parseError.message);
       detalle = [];
     }
-    
+
     return {
       Nombre: p.json.Nombre,
       Descripcion: p.json.Descripcion,
@@ -55,13 +55,13 @@ try {
   // Leer addons
   const addonsRaw = $('obtenerAddons').all();
   console.log('📊 Addons raw recibidos:', addonsRaw.length);
-  
+
   catalog.addons = addonsRaw.map(a => ({
     Nombre: a.json.Nombre,
     Precio: parseFloat(a.json.precio || a.json.Precio) || 0,
     Icono: a.json.Icono
   }));
-  
+
   console.log('✅ Catálogo consolidado:', catalog.paquetes.length, 'paquetes,', catalog.addons.length, 'addons');
 } catch (e) {
   console.error('❌ Error consolidando catálogo:', e.message);
@@ -83,16 +83,16 @@ let botonesRecuperacion = null;
 
 if (esRecuperacion) {
   console.log('🔄 Recuperación de sesión detectada. Paso actual:', pasoActual);
-  
+
   // Generar mensaje de recuperación
   const resumenDatos = [];
   if (datosJson.tipo_evento) resumenDatos.push(`🎊 Evento: ${datosJson.tipo_evento}`);
   if (datosJson.fecha_evento) resumenDatos.push(`📅 Fecha: ${datosJson.fecha_evento}`);
   if (datosJson.ubicacion_evento) resumenDatos.push(`📍 Ciudad: ${datosJson.ubicacion_evento}`);
   if (datosJson.paquete_interes) resumenDatos.push(`📦 Paquete: ${datosJson.paquete_interes}`);
-  
+
   const datosStr = resumenDatos.length > 0 ? `**Datos guardados:**\n${resumenDatos.join('\n')}\n\n` : '';
-  
+
   // Mensajes por paso
   const mensajesPorPaso = {
     'start': '¿Qué tipo de evento deseas transmitir?',
@@ -109,9 +109,9 @@ if (esRecuperacion) {
     'comentarios': '📝 ¿Tienes algún comentario adicional?',
     'completado': '¿Confirmas los datos?'
   };
-  
+
   mensajeRecuperacion = `👋 ¡Hola de nuevo! Veo que ya tenías una reservación en progreso.\n\n${datosStr}${mensajesPorPaso[pasoActual] || 'Continuemos donde quedamos...'}`;
-  
+
   // Generar botones dinámicos si el paso los requiere
   botonesRecuperacion = generarBotonesParaPaso(pasoActual, catalog, datosJson);
 }
@@ -120,18 +120,18 @@ if (esRecuperacion) {
 const contexto = {
   // Catálogo
   catalog: catalog,
-  
+
   // Sesión
   paso_actual: pasoActual,
   datos_json: datosJson,
   intentos_fallidos: intentosFallidos,
   tipoValidacion: tipoValidacion,
-  
+
   // Mensaje de Telegram
   message: telegramData.message || {},
   callback_query: telegramData.callback_query || null,
   chat_id: telegramData.message?.chat?.id || telegramData.callback_query?.message?.chat?.id,
-  
+
   // Recuperación
   esRecuperacion: esRecuperacion,
   mensajeRecuperacion: mensajeRecuperacion,
@@ -173,29 +173,29 @@ function generarBotonesParaPaso(paso, catalog, datosActuales) {
       [{ text: '❌ No tiene / No estoy seguro', callback_data: 'internet_no' }]
     ]
   };
-  
+
   // Botones dinámicos del catálogo
   if (paso === 'paquete' && catalog.paquetes && catalog.paquetes.length > 0) {
-    return catalog.paquetes.map(p => ([{ 
-      text: `${p.Icono} ${p.Nombre}`, 
-      callback_data: `pkg_${p.Nombre.toLowerCase().replace(/\\s+/g, '_')}` 
+    return catalog.paquetes.map(p => ([{
+      text: `${p.Icono} ${p.Nombre}`,
+      callback_data: `pkg_${p.Nombre.toLowerCase().replace(/\s+/g, '_')}`
     }]));
   }
-  
+
   if (paso === 'addons' && catalog.addons && catalog.addons.length > 0) {
     const addonsSeleccionados = datosActuales.add_ons_solicitados || [];
     const nombresSeleccionados = addonsSeleccionados.map(a => a.nombre);
-    
+
     const botones = catalog.addons
       .filter(a => !nombresSeleccionados.includes(a.Nombre))
       .map(a => ([{
         text: `${a.Icono} ${a.Nombre} (+$${a.Precio})`,
-        callback_data: `addon_${a.Nombre.toLowerCase().replace(/\\s+/g, '_')}`
+        callback_data: `addon_${a.Nombre.toLowerCase().replace(/\s+/g, '_')}`
       }]));
-      
+
     botones.push([{ text: '✅ Listo, continuar', callback_data: 'addon_listo' }]);
     return botones;
   }
-  
+
   return botonesEstaticos[paso] || null;
 }
